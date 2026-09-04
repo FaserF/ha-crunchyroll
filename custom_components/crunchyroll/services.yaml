@@ -1,0 +1,188 @@
+search:
+  name: Search
+  description: Search Crunchyroll anime series, episodes, and movies.
+  fields:
+    query:
+      name: Query
+      description: Search terms.
+      required: true
+      example: "Jujutsu Kaisen"
+      selector:
+        text:
+    limit:
+      name: Limit
+      description: Maximum number of search results to return.
+      required: false
+      default: 10
+      example: 10
+      selector:
+        number:
+          min: 1
+          max: 50
+          mode: box
+
+get_watchlist:
+  name: Get Watchlist
+  description: Retrieve items currently saved in your Crunchyroll watchlist.
+  fields:
+    limit:
+      name: Limit
+      description: Maximum number of watchlist items to fetch.
+      required: false
+      default: 20
+      example: 20
+      selector:
+        number:
+          min: 1
+          max: 100
+          mode: box
+
+get_history:
+  name: Get Watch History
+  description: Retrieve your recent Crunchyroll watch history including playhead and episode details.
+  fields:
+    limit:
+      name: Limit
+      description: Maximum number of history items to fetch.
+      required: false
+      default: 20
+      example: 20
+      selector:
+        number:
+          min: 1
+          max: 100
+          mode: box
+
+add_to_watchlist:
+  name: Add to Watchlist
+  description: Add an anime series or movie to your Crunchyroll watchlist.
+  fields:
+    content_id:
+      name: Content ID
+      description: Crunchyroll series ID (e.g. GY5P48XEY).
+      required: true
+      example: "GY5P48XEY"
+      selector:
+        text:
+
+remove_from_watchlist:
+  name: Remove from Watchlist
+  description: Remove an anime series or movie from your Crunchyroll watchlist.
+  fields:
+    content_id:
+      name: Content ID
+      description: Crunchyroll series ID (e.g. GY5P48XEY).
+      required: true
+      example: "GY5P48XEY"
+      selector:
+        text:
+
+get_popular:
+  name: Get Popular Anime
+  description: Retrieve currently trending and popular anime on Crunchyroll.
+  fields:
+    limit:
+      name: Limit
+      description: Number of popular anime to fetch.
+      required: false
+      default: 20
+      example: 20
+      selector:
+        number:
+          min: 1
+          max: 50
+          mode: box
+
+get_similar:
+  name: Get Similar Anime
+  description: Discover anime similar to a specified series ID.
+  fields:
+    series_id:
+      name: Series ID
+      description: Crunchyroll series ID.
+      required: true
+      example: "G0XHWM380"
+      selector:
+        text:
+    limit:
+      name: Limit
+      description: Number of recommendations to fetch.
+      required: false
+      default: 10
+      example: 10
+      selector:
+        number:
+          min: 1
+          max: 50
+          mode: box
+
+get_seasons:
+  name: Get Seasons
+  description: Retrieve all seasons for a specific anime series.
+  fields:
+    series_id:
+      name: Series ID
+      description: Crunchyroll series ID.
+      required: true
+      example: "G0XHWM380"
+      selector:
+        text:
+
+get_episodes:
+  name: Get Episodes
+  description: Retrieve all episodes for a specific season ID.
+  fields:
+    season_id:
+      name: Season ID
+      description: Crunchyroll season ID.
+      required: true
+      example: "GR2PCV28X"
+      selector:
+        text:
+
+get_custom_list_items:
+  name: Get Custom List Items
+  description: Retrieve items saved inside a user Crunchylist (custom list).
+  fields:
+    list_id:
+      name: List ID
+      description: Custom list UUID.
+      required: true
+      example: "4cb3f9c2-b1e4-44a6-8394-0541c0ce5684"
+      selector:
+        text:
+
+mark_as_watched:
+  name: Mark as Watched
+  description: Mark an episode or content item as completely watched.
+  fields:
+    content_id:
+      name: Content ID
+      description: Crunchyroll episode or content ID.
+      required: true
+      example: "G50UMKWDZ"
+      selector:
+        text:
+
+update_playhead:
+  name: Update Playhead
+  description: Update watch progress / playhead resume position in seconds for an episode.
+  fields:
+    content_id:
+      name: Content ID
+      description: Crunchyroll episode ID.
+      required: true
+      example: "G9DU9EG8N"
+      selector:
+        text:
+    playhead_seconds:
+      name: Playhead (seconds)
+      description: Playback position in seconds.
+      required: true
+      example: 120
+      selector:
+        number:
+          min: 0
+          max: 86400
+          mode: box
+          unit_of_measurement: s

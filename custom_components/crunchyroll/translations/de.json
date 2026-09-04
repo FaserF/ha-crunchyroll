@@ -1,0 +1,82 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mit Crunchyroll verbinden",
+        "description": "Gib deine Crunchyroll-Zugangsdaten ein, um Home Assistant zu verbinden.",
+        "data": {
+          "email": "E-Mail oder Benutzername",
+          "password": "Passwort",
+          "locale": "Sprachregion (z.B. de-DE, en-US)",
+          "preferred_audio_language": "Bevorzugte Audiosprache (z.B. ja-JP, de-DE)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung zu den Crunchyroll-Servern fehlgeschlagen.",
+      "invalid_auth": "Ungültige E-Mail/Benutzername oder falsches Passwort.",
+      "unknown": "Unerwarteter Fehler aufgetreten."
+    },
+    "abort": {
+      "already_configured": "Dieses Crunchyroll-Konto ist bereits konfiguriert."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Crunchyroll Einstellungen",
+        "description": "Aktualisierungsintervall (mindestens 3600 Sekunden / 1 Stunde) und Spracheinstellungen anpassen.",
+        "data": {
+          "scan_interval": "Aktualisierungsintervall (Sekunden, min. 3600)",
+          "locale": "Inhaltssprache",
+          "preferred_audio_language": "Bevorzugte Audiosprache"
+        }
+      }
+    },
+    "error": {
+      "min_scan_interval": "Das Aktualisierungsintervall muss mindestens 3600 Sekunden (1 Stunde) betragen."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "account": {
+        "name": "Konto"
+      },
+      "watchlist": {
+        "name": "Watchlist"
+      },
+      "completed_animes": {
+        "name": "Abgeschlossene Animes"
+      },
+      "in_progress_animes": {
+        "name": "Begonnene Animes"
+      },
+      "new_animes": {
+        "name": "Neue Animes"
+      },
+      "popular_animes": {
+        "name": "Beliebte Animes"
+      },
+      "simulcasts": {
+        "name": "Simulcasts"
+      },
+      "movies": {
+        "name": "Filme"
+      },
+      "custom_lists": {
+        "name": "Eigene Listen"
+      },
+      "new_episodes_for_watched": {
+        "name": "Neue Folgen geschauter Animes"
+      },
+      "new_episodes": {
+        "name": "Neue Episoden"
+      }
+    },
+    "calendar": {
+      "releases": {
+        "name": "Veröffentlichungen"
+      }
+    }
+  }
+}

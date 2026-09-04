@@ -1,0 +1,82 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Crunchyroll",
+        "description": "Enter your Crunchyroll credentials to connect Home Assistant.",
+        "data": {
+          "email": "Email or Username",
+          "password": "Password",
+          "locale": "Locale (e.g. en-US, de-DE)",
+          "preferred_audio_language": "Preferred Audio Language (e.g. ja-JP, en-US)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to Crunchyroll servers.",
+      "invalid_auth": "Invalid email/username or password.",
+      "unknown": "Unexpected error occurred."
+    },
+    "abort": {
+      "already_configured": "This Crunchyroll account is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Crunchyroll Options",
+        "description": "Adjust polling interval (minimum 3600 seconds / 1 hour) and language preferences.",
+        "data": {
+          "scan_interval": "Update Interval (seconds, min. 3600)",
+          "locale": "Content Locale",
+          "preferred_audio_language": "Preferred Audio Language"
+        }
+      }
+    },
+    "error": {
+      "min_scan_interval": "Update interval must be at least 3600 seconds (1 hour)."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "account": {
+        "name": "Account"
+      },
+      "watchlist": {
+        "name": "Watchlist"
+      },
+      "completed_animes": {
+        "name": "Completed Animes"
+      },
+      "in_progress_animes": {
+        "name": "In-Progress Animes"
+      },
+      "new_animes": {
+        "name": "New Animes"
+      },
+      "popular_animes": {
+        "name": "Popular Animes"
+      },
+      "simulcasts": {
+        "name": "Simulcasts"
+      },
+      "movies": {
+        "name": "Movies"
+      },
+      "custom_lists": {
+        "name": "Custom Lists"
+      },
+      "new_episodes_for_watched": {
+        "name": "New Episodes for Watched Anime"
+      },
+      "new_episodes": {
+        "name": "New Episodes"
+      }
+    },
+    "calendar": {
+      "releases": {
+        "name": "Releases"
+      }
+    }
+  }
+}
