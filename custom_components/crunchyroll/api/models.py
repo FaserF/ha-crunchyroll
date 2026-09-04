@@ -8,7 +8,9 @@ from typing import Any
 class CrunchyrollProfile:
     """Crunchyroll user profile."""
 
+    profile_id: str = ""
     account_id: str = ""
+    external_id: str = ""
     profile_name: str = ""
     username: str = ""
     email: str = ""
@@ -17,13 +19,18 @@ class CrunchyrollProfile:
     avatar: str = ""
     preferred_communication_language: str = ""
     preferred_content_subtitle_language: str = ""
+    preferred_content_audio_language: str = ""
+    is_primary: bool = False
+    is_selected: bool = False
 
     @classmethod
     def from_dict(
         cls, data: dict[str, Any], account_id: str = ""
     ) -> CrunchyrollProfile:
         return cls(
+            profile_id=data.get("profile_id", ""),
             account_id=account_id or data.get("account_id", ""),
+            external_id=str(data.get("external_id", "")),
             profile_name=data.get("profile_name", ""),
             username=data.get("username", ""),
             email=data.get("email", ""),
@@ -38,6 +45,11 @@ class CrunchyrollProfile:
             preferred_content_subtitle_language=data.get(
                 "preferred_content_subtitle_language", ""
             ),
+            preferred_content_audio_language=data.get(
+                "preferred_content_audio_language", ""
+            ),
+            is_primary=bool(data.get("is_primary", False)),
+            is_selected=bool(data.get("is_selected", False)),
         )
 
 
@@ -50,18 +62,51 @@ class CrunchyrollSubscription:
     products: list[str] = field(default_factory=list)
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> CrunchyrollSubscription:
+    def from_dict(
+        cls, data: dict[str, Any], benefits: list[str] | None = None
+    ) -> CrunchyrollSubscription:
         items = data.get("items", [])
         if not items and isinstance(data, list):
             items = data
-        prods = []
+        prods: list[str] = []
         is_prem = False
         for it in items:
-            pid = it.get("product_id", it.get("id", ""))
-            prods.append(pid)
-            if "premium" in pid.lower() or "fan" in pid.lower():
+            prod_info = (
+                it.get("product", {}) if isinstance(it.get("product"), dict) else {}
+            )
+            pid = (
+                it.get("product_id")
+                or prod_info.get("sku")
+                or prod_info.get("name")
+                or it.get("id")
+                or ""
+            )
+            if pid:
+                prods.append(pid)
+            check_str = f"{pid} {prod_info.get('description', '')}".lower()
+            if "premium" in check_str or "fan" in check_str:
                 is_prem = True
-        tier_name = prods[0] if prods else ("mega_fan" if is_prem else "free")
+
+        if benefits:
+            for b in benefits:
+                if "premium" in b.lower() or "fan" in b.lower():
+                    is_prem = True
+                if b not in prods:
+                    prods.append(b)
+
+        if is_prem:
+            # Determine readable tier name
+            tier_name = "mega_fan"
+            for p in prods:
+                p_lower = p.lower()
+                if "fanpack" in p_lower or "mega_fan" in p_lower:
+                    tier_name = "mega_fan"
+                    break
+                if "fan" in p_lower:
+                    tier_name = "fan"
+        else:
+            tier_name = "free"
+
         return cls(is_premium=is_prem, tier=tier_name, products=prods)
 
 
@@ -84,6 +129,7 @@ class CrunchyrollItem:
     is_completed: bool = False
     date_played: str | None = None
     release_date: str | None = None
+    audio_locale: str | None = None
 
     @classmethod
     def from_panel_dict(cls, data: dict[str, Any]) -> CrunchyrollItem:
@@ -130,6 +176,7 @@ class CrunchyrollItem:
             or ep_meta.get("upload_date")
             or data.get("last_public")
         )
+        audio_loc = ep_meta.get("audio_locale") or data.get("audio_locale")
 
         return cls(
             id=id_,
@@ -147,6 +194,7 @@ class CrunchyrollItem:
             is_completed=is_compl,
             date_played=date_played,
             release_date=rel_date,
+            audio_locale=audio_loc,
         )
 
     @property
@@ -180,6 +228,7 @@ class CrunchyrollItem:
             "is_completed": self.is_completed,
             "date_played": self.date_played,
             "release_date": self.release_date,
+            "audio_locale": self.audio_locale,
             "url": self.crunchyroll_url,
         }
 
@@ -292,3 +341,4 @@ class CrunchyrollData:
     categories: list[Category] = field(default_factory=list)
     new_episodes: list[CrunchyrollItem] = field(default_factory=list)
     new_episodes_for_watched: list[CrunchyrollItem] = field(default_factory=list)
+    total_history_count: int = 0

@@ -6,9 +6,11 @@ DOMAIN: Final = "crunchyroll"
 
 CONF_EMAIL: Final = "email"
 CONF_PASSWORD: Final = "password"
+CONF_PROFILE_ID: Final = "profile_id"
 CONF_LOCALE: Final = "locale"
 CONF_AUDIO_LOCALE: Final = "preferred_audio_language"
 CONF_SCAN_INTERVAL: Final = "scan_interval"
+CONF_AUTO_REMOVE_WATCHED_FROM_WATCHLIST: Final = "auto_remove_watched_from_watchlist"
 
 DEFAULT_SCAN_INTERVAL: Final = 86400  # 24 hours
 MIN_SCAN_INTERVAL: Final = 3600  # 1 hour
@@ -16,6 +18,7 @@ DEFAULT_LOCALE: Final = "en-US"
 DEFAULT_AUDIO_LOCALE: Final = "ja-JP"
 
 ATTR_ACCOUNT_ID: Final = "account_id"
+ATTR_PROFILE_ID: Final = "profile_id"
 ATTR_PROFILE_NAME: Final = "profile_name"
 ATTR_EMAIL: Final = "email"
 ATTR_EMAIL_VERIFIED: Final = "email_verified"

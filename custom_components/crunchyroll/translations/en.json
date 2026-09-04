@@ -6,9 +6,14 @@
         "description": "Enter your Crunchyroll credentials to connect Home Assistant.",
         "data": {
           "email": "Email or Username",
-          "password": "Password",
-          "locale": "Locale (e.g. en-US, de-DE)",
-          "preferred_audio_language": "Preferred Audio Language (e.g. ja-JP, en-US)"
+          "password": "Password"
+        }
+      },
+      "profile": {
+        "title": "Select Profile",
+        "description": "Choose which profile you want Home Assistant to use.",
+        "data": {
+          "profile_id": "Profile"
         }
       }
     },
@@ -27,9 +32,11 @@
         "title": "Crunchyroll Options",
         "description": "Adjust polling interval (minimum 3600 seconds / 1 hour) and language preferences.",
         "data": {
+          "profile_id": "Profile",
           "scan_interval": "Update Interval (seconds, min. 3600)",
           "locale": "Content Locale",
-          "preferred_audio_language": "Preferred Audio Language"
+          "preferred_audio_language": "Preferred Audio Language",
+          "auto_remove_watched_from_watchlist": "Automatically remove watched anime from watchlist on sync"
         }
       }
     },
@@ -76,6 +83,11 @@
     "calendar": {
       "releases": {
         "name": "Releases"
+      }
+    },
+    "button": {
+      "clean_watchlist": {
+        "name": "Clean Watched from Watchlist"
       }
     }
   }

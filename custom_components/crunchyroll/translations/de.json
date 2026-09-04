@@ -6,9 +6,14 @@
         "description": "Gib deine Crunchyroll-Zugangsdaten ein, um Home Assistant zu verbinden.",
         "data": {
           "email": "E-Mail oder Benutzername",
-          "password": "Passwort",
-          "locale": "Sprachregion (z.B. de-DE, en-US)",
-          "preferred_audio_language": "Bevorzugte Audiosprache (z.B. ja-JP, de-DE)"
+          "password": "Passwort"
+        }
+      },
+      "profile": {
+        "title": "Profil auswählen",
+        "description": "Wähle aus, welches Profil Home Assistant verwenden soll.",
+        "data": {
+          "profile_id": "Profil"
         }
       }
     },
@@ -27,9 +32,11 @@
         "title": "Crunchyroll Einstellungen",
         "description": "Aktualisierungsintervall (mindestens 3600 Sekunden / 1 Stunde) und Spracheinstellungen anpassen.",
         "data": {
+          "profile_id": "Profil",
           "scan_interval": "Aktualisierungsintervall (Sekunden, min. 3600)",
           "locale": "Inhaltssprache",
-          "preferred_audio_language": "Bevorzugte Audiosprache"
+          "preferred_audio_language": "Bevorzugte Audiosprache",
+          "auto_remove_watched_from_watchlist": "Bereits vollständig geschaute Animes bei jeder Synchronisierung aus der Watchlist entfernen"
         }
       }
     },
@@ -76,6 +83,11 @@
     "calendar": {
       "releases": {
         "name": "Veröffentlichungen"
+      }
+    },
+    "button": {
+      "clean_watchlist": {
+        "name": "Geschaute Animes aus Watchlist entfernen"
       }
     }
   }

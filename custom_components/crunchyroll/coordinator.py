@@ -12,6 +12,7 @@ from .api.client import CrunchyrollClient
 from .api.exceptions import AuthenticationError, ConnectionError, CrunchyrollError
 from .api.models import CrunchyrollData
 from .const import (
+    CONF_AUTO_REMOVE_WATCHED_FROM_WATCHLIST,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     EVENT_CRUNCHYROLL_NEW_EPISODE_AVAILABLE,
@@ -106,4 +107,48 @@ class CrunchyrollDataUpdateCoordinator(DataUpdateCoordinator[CrunchyrollData]):
                     )
         self._previous_episode_ids = current_ep_ids
 
+        # If configured, automatically remove completed anime from watchlist
+        if self.config_entry and self.config_entry.options.get(
+            CONF_AUTO_REMOVE_WATCHED_FROM_WATCHLIST, False
+        ):
+            await self._async_clean_completed_from_watchlist_items(data)
+
         return data
+
+    async def _async_clean_completed_from_watchlist_items(
+        self, data: CrunchyrollData
+    ) -> list[str]:
+        """Remove completed anime from the watchlist using provided data."""
+        completed_ids = {
+            item.series_id for item in data.completed_animes if item.series_id
+        }
+        removed_titles: list[str] = []
+        for wl_item in list(data.watchlist):
+            target_id = wl_item.series_id or wl_item.id
+            if target_id and target_id in completed_ids:
+                try:
+                    await self.client.remove_from_watchlist(target_id)
+                    data.watchlist.remove(wl_item)
+                    removed_titles.append(wl_item.title)
+                    _LOGGER.info(
+                        "Removed completed anime '%s' (%s) from watchlist",
+                        wl_item.title,
+                        target_id,
+                    )
+                except CrunchyrollError as err:
+                    _LOGGER.warning(
+                        "Failed to remove '%s' from watchlist: %s",
+                        wl_item.title,
+                        err,
+                    )
+        return removed_titles
+
+    async def async_clean_completed_from_watchlist(self) -> list[str]:
+        """Manually trigger removing completed anime from watchlist and refresh state."""
+        if not self.data:
+            await self.async_request_refresh()
+            return []
+        removed = await self._async_clean_completed_from_watchlist_items(self.data)
+        if removed:
+            self.async_update_listeners()
+        return removed

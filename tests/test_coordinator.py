@@ -109,3 +109,48 @@ async def test_coordinator_new_episode_event(
     assert events[0]["episode_id"] == "ep-new-1"
     assert events[0]["series_title"] == "Frieren: Beyond Journey's End"
     assert events[0]["episode_number"] == "29"
+
+
+async def test_coordinator_auto_remove_watched_from_watchlist(
+    hass: HomeAssistant, mock_crunchyroll_client, mock_crunchyroll_data
+) -> None:
+    """Test auto removal of completed anime during coordinator refresh when option enabled."""
+    from custom_components.crunchyroll.api.models import AnimeProgress, CrunchyrollItem
+    from custom_components.crunchyroll.const import (
+        CONF_AUTO_REMOVE_WATCHED_FROM_WATCHLIST,
+    )
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_EMAIL: "test@example.com", CONF_PASSWORD: "secret"},
+        options={CONF_AUTO_REMOVE_WATCHED_FROM_WATCHLIST: True},
+        entry_id="test_entry_id",
+    )
+    entry.add_to_hass(hass)
+
+    mock_item = CrunchyrollItem(
+        id="series-auto-1",
+        title="Completed Series",
+        series_id="series-auto-1",
+    )
+    mock_crunchyroll_data.watchlist = [mock_item]
+    mock_crunchyroll_data.completed_animes = [
+        AnimeProgress(
+            series_id="series-auto-1",
+            series_title="Completed Series",
+            episode_id="ep-end",
+            episode_title="The End",
+            is_completed=True,
+        )
+    ]
+
+    coordinator = CrunchyrollDataUpdateCoordinator(
+        hass, mock_crunchyroll_client, config_entry=entry, update_interval_seconds=300
+    )
+
+    await coordinator.async_refresh()
+
+    mock_crunchyroll_client.remove_from_watchlist.assert_awaited_once_with(
+        "series-auto-1"
+    )
+    assert len(coordinator.data.watchlist) == 0

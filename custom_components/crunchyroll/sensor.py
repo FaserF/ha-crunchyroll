@@ -28,6 +28,7 @@ from .const import (
     ATTR_NEW_EPISODES_FOR_WATCHED,
     ATTR_POPULAR_ANIMES,
     ATTR_PRODUCTS,
+    ATTR_PROFILE_ID,
     ATTR_PROFILE_NAME,
     ATTR_RECOMMENDATIONS,
     ATTR_SIMULCASTS,
@@ -169,6 +170,7 @@ class CrunchyrollAccountSensor(_BaseCrunchyrollSensor):
 
         return {
             ATTR_ACCOUNT_ID: prof.account_id,
+            ATTR_PROFILE_ID: prof.profile_id or prof.account_id,
             ATTR_PROFILE_NAME: prof.profile_name or prof.username,
             ATTR_EMAIL: prof.email,
             ATTR_EMAIL_VERIFIED: prof.email_verified,
@@ -178,7 +180,7 @@ class CrunchyrollAccountSensor(_BaseCrunchyrollSensor):
             ATTR_MATURITY_RATING: prof.maturity_rating,
             ATTR_WATCHLIST_COUNT: len(data.watchlist),
             ATTR_WATCHLIST: watchlist_items,
-            ATTR_HISTORY_COUNT: len(data.history),
+            ATTR_HISTORY_COUNT: data.total_history_count or len(data.history),
             ATTR_LAST_WATCHED: last_watched_dict,
             ATTR_RECOMMENDATIONS: recommendations_items,
             ATTR_CUSTOM_LISTS: [cl.to_dict() for cl in data.custom_lists],

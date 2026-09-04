@@ -13,6 +13,7 @@ from custom_components.crunchyroll.const import (
     ATTR_IS_PREMIUM,
     ATTR_LAST_WATCHED,
     ATTR_PRODUCTS,
+    ATTR_PROFILE_ID,
     ATTR_SUBSCRIPTION_TIER,
     ATTR_WATCHLIST_COUNT,
     CONF_EMAIL,
@@ -52,6 +53,7 @@ async def test_sensor_setup_and_state(
         assert state.state == "mega_fan"
         attrs = state.attributes
         assert attrs[ATTR_ACCOUNT_ID] == "acc-12345"
+        assert attrs[ATTR_PROFILE_ID] == "acc-12345"
         assert attrs[ATTR_EMAIL] == "test@example.com"
         assert attrs[ATTR_EMAIL_VERIFIED] is True
         assert attrs[ATTR_IS_PREMIUM] is True

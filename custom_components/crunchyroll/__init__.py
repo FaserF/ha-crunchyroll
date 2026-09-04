@@ -13,6 +13,7 @@ from .const import (
     CONF_EMAIL,
     CONF_LOCALE,
     CONF_PASSWORD,
+    CONF_PROFILE_ID,
     CONF_SCAN_INTERVAL,
     DEFAULT_AUDIO_LOCALE,
     DEFAULT_LOCALE,
@@ -27,6 +28,7 @@ _LOGGER = logging.getLogger(__name__)
 PLATFORMS: Final[list[Platform]] = [
     Platform.SENSOR,
     Platform.CALENDAR,
+    Platform.BUTTON,
 ]
 
 
@@ -47,11 +49,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entry.data.get(CONF_AUDIO_LOCALE, DEFAULT_AUDIO_LOCALE),
     )
 
+    profile_id = entry.options.get(
+        CONF_PROFILE_ID,
+        entry.data.get(CONF_PROFILE_ID),
+    )
+
     client = CrunchyrollClient(
         email=entry.data[CONF_EMAIL],
         password=entry.data[CONF_PASSWORD],
         locale=locale,
         preferred_audio_language=audio_locale,
+        profile_id=profile_id,
     )
 
     coordinator = CrunchyrollDataUpdateCoordinator(

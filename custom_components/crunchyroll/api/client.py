@@ -6,6 +6,7 @@ from typing import Any
 from uuid import uuid4
 
 import httpx
+import jwt
 
 from .exceptions import (
     AuthenticationError,
@@ -48,6 +49,8 @@ class CrunchyrollClient:
         refresh_token: str | None = None,
         token_expiry: float | None = None,
         account_id: str | None = None,
+        profile_id: str | None = None,
+        external_id: str | None = None,
         http_client: httpx.AsyncClient | None = None,
     ) -> None:
         self.email = email
@@ -62,6 +65,8 @@ class CrunchyrollClient:
         self.refresh_token = refresh_token
         self.token_expiry = token_expiry
         self.account_id = account_id
+        self.profile_id = profile_id
+        self.external_id = external_id
 
         self._client = http_client or httpx.AsyncClient(timeout=20.0)
         self._owns_client = http_client is None
@@ -194,24 +199,99 @@ class CrunchyrollClient:
             f"API error {resp.status_code} on {endpoint}: {resp.text}"
         )
 
+    async def get_profiles(self) -> list[CrunchyrollProfile]:
+        """Fetch all profiles associated with the account."""
+        try:
+            data = await self.request("GET", "accounts/v1/me/multiprofile")
+            profiles_raw = data.get("profiles", [])
+            profiles = [CrunchyrollProfile.from_dict(p) for p in profiles_raw]
+            if profiles:
+                return profiles
+        except CrunchyrollError:
+            _LOGGER.debug(
+                "Failed to fetch multiprofile, falling back to single profile"
+            )
+
+        # Fallback to single profile
+        single = await self.get_profile()
+        return [single]
+
     async def get_profile(self) -> CrunchyrollProfile:
+        me_data: dict[str, Any] = {}
+        try:
+            me_data = await self.request("GET", "accounts/v1/me")
+            if me_data:
+                self.account_id = me_data.get("account_id", self.account_id or "")
+                self.external_id = str(
+                    me_data.get("external_id", self.external_id or "")
+                )
+        except CrunchyrollError:
+            pass
+
         try:
             data = await self.request("GET", "accounts/v1/me/profile")
         except CrunchyrollError:
-            data = await self.request("GET", "auth/v1/me")
+            data = me_data or await self.request("GET", "auth/v1/me")
         self.account_id = data.get("account_id", self.account_id or "")
+
+        # Merge account-level fields (like email_verified and external_id) from /accounts/v1/me
+        if me_data:
+            if "email_verified" in me_data:
+                data["email_verified"] = me_data["email_verified"]
+            if "external_id" in me_data:
+                data["external_id"] = me_data["external_id"]
+
+        # If a specific profile_id is configured and differs from primary, try to fetch it from multiprofile
+        if self.profile_id and self.profile_id != data.get("profile_id"):
+            try:
+                prof_data = await self.request(
+                    "GET", f"accounts/v1/me/multiprofile/{self.profile_id}"
+                )
+                if prof_data:
+                    if me_data:
+                        prof_data["email_verified"] = me_data.get(
+                            "email_verified", False
+                        )
+                        prof_data["external_id"] = me_data.get("external_id", "")
+                    return CrunchyrollProfile.from_dict(prof_data, self.account_id)
+            except CrunchyrollError:
+                _LOGGER.warning(
+                    "Failed to fetch profile %s, falling back to primary",
+                    self.profile_id,
+                )
+
         return CrunchyrollProfile.from_dict(data, self.account_id)
 
     async def get_subscription(self) -> CrunchyrollSubscription:
         if not self.account_id:
             await self.get_profile()
-        try:
-            data = await self.request(
-                "GET", f"subs/v1/subscriptions/{self.account_id}/products"
-            )
-            return CrunchyrollSubscription.from_dict(data)
-        except CrunchyrollError:
-            return CrunchyrollSubscription()
+
+        # Extract benefits claim from access token JWT if present
+        token_benefits: list[str] = []
+        if self.access_token:
+            try:
+                claims = jwt.decode(
+                    self.access_token, options={"verify_signature": False}
+                )
+                token_benefits = claims.get("benefits", [])
+            except Exception:  # noqa: BLE001
+                token_benefits = []
+
+        sub_data: dict[str, Any] = {}
+        # Try external_id first (used by iTunes/App Store/Google Play/web subs) then account_id
+        ids_to_try = [id_ for id_ in (self.external_id, self.account_id) if id_]
+        for sub_id in ids_to_try:
+            try:
+                data = await self.request(
+                    "GET", f"subs/v1/subscriptions/{sub_id}/products"
+                )
+                if data and (data.get("items") or isinstance(data, list)):
+                    sub_data = data
+                    break
+            except CrunchyrollError:
+                continue
+
+        return CrunchyrollSubscription.from_dict(sub_data, benefits=token_benefits)
 
     async def get_watchlist(self, limit: int = 50) -> list[CrunchyrollItem]:
         if not self.account_id:
@@ -224,9 +304,9 @@ class CrunchyrollClient:
         items = data.get("data", [])
         return [CrunchyrollItem.from_panel_dict(it) for it in items]
 
-    async def get_watch_history(
+    async def get_watch_history_with_total(
         self, limit: int = 20, page: int = 1
-    ) -> list[CrunchyrollItem]:
+    ) -> tuple[list[CrunchyrollItem], int]:
         if not self.account_id:
             await self.get_profile()
         data = await self.request(
@@ -235,7 +315,14 @@ class CrunchyrollClient:
             params={"page_size": limit, "page": page, "locale": self.locale},
         )
         items = data.get("data", [])
-        return [CrunchyrollItem.from_panel_dict(it) for it in items]
+        total = int(data.get("total", len(items)))
+        return [CrunchyrollItem.from_panel_dict(it) for it in items], total
+
+    async def get_watch_history(
+        self, limit: int = 20, page: int = 1
+    ) -> list[CrunchyrollItem]:
+        items, _ = await self.get_watch_history_with_total(limit=limit, page=page)
+        return items
 
     async def get_continue_watching(self, limit: int = 100) -> list[CrunchyrollItem]:
         """Fetch native continue watching list."""
@@ -551,13 +638,21 @@ class CrunchyrollClient:
         watchlist = await self.get_watchlist(100)
         # Fetch full watch history (up to 10,000 items / 20 pages of 500) so older series are never dropped
         history: list[CrunchyrollItem] = []
+        total_history_count = 0
         for page_idx in range(1, 21):
-            page_items = await self.get_watch_history(500, page=page_idx)
+            page_items, total_count = await self.get_watch_history_with_total(
+                500, page=page_idx
+            )
+            if page_idx == 1:
+                total_history_count = total_count
             if not page_items:
                 break
             history.extend(page_items)
             if len(page_items) < 500:
                 break
+
+        if not total_history_count:
+            total_history_count = len(history)
 
         continue_watching = await self.get_continue_watching(100)
         recommendations = await self.get_recommendations(25)
@@ -677,11 +772,47 @@ class CrunchyrollClient:
             prog.series_id for prog in completed_animes if prog.series_id
         )
 
-        new_episodes_for_watched: list[CrunchyrollItem] = [
+        watched_episode_ids: set[str] = {h.id for h in history if h.id}
+        watched_episode_ids.update(
+            prog.episode_id for prog in in_progress_animes if prog.episode_id
+        )
+        watched_episode_ids.update(
+            prog.episode_id for prog in completed_animes if prog.episode_id
+        )
+
+        # Collect candidate new episodes for watched series that the user hasn't already watched
+        candidate_episodes: list[CrunchyrollItem] = [
             ep
             for ep in new_episodes
-            if (ep.series_id and ep.series_id in user_series_ids)
+            if ep.series_id
+            and ep.series_id in user_series_ids
+            and ep.id not in watched_episode_ids
         ]
+
+        # If user has a preferred audio language, prioritize matching audio dubs
+        pref_audio = self.preferred_audio_language
+        if pref_audio:
+            has_pref_match = any(
+                ep.audio_locale == pref_audio
+                for ep in candidate_episodes
+                if ep.audio_locale
+            )
+            if has_pref_match:
+                candidate_episodes = [
+                    ep
+                    for ep in candidate_episodes
+                    if not ep.audio_locale or ep.audio_locale == pref_audio
+                ]
+
+        # Deduplicate multiple dubs / duplicate releases of the exact same episode
+        seen_ep_keys: set[tuple[str, str | None]] = set()
+        new_episodes_for_watched: list[CrunchyrollItem] = []
+        for ep in candidate_episodes:
+            ep_key = (ep.series_id or "", ep.episode_number or ep.title)
+            if ep_key in seen_ep_keys:
+                continue
+            seen_ep_keys.add(ep_key)
+            new_episodes_for_watched.append(ep)
 
         return CrunchyrollData(
             profile=profile,
@@ -699,4 +830,5 @@ class CrunchyrollClient:
             categories=categories,
             new_episodes=new_episodes,
             new_episodes_for_watched=new_episodes_for_watched,
+            total_history_count=total_history_count,
         )

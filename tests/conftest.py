@@ -51,6 +51,7 @@ def mock_profile() -> CrunchyrollProfile:
     """Fixture for Crunchyroll profile."""
     return CrunchyrollProfile(
         account_id="acc-12345",
+        profile_id="acc-12345",
         profile_name="AnimeHero",
         username="anime_hero",
         email="test@example.com",
@@ -59,6 +60,7 @@ def mock_profile() -> CrunchyrollProfile:
         avatar="https://img.crunchyroll.com/avatar.png",
         preferred_communication_language="de-DE",
         preferred_content_subtitle_language="de-DE",
+        preferred_content_audio_language="ja-JP",
     )
 
 
@@ -163,9 +165,13 @@ def mock_crunchyroll_client(mock_crunchyroll_data: CrunchyrollData):
     client.login = AsyncMock(return_value=True)
     client.close = AsyncMock(return_value=None)
     client.get_profile = AsyncMock(return_value=mock_crunchyroll_data.profile)
+    client.get_profiles = AsyncMock(return_value=[mock_crunchyroll_data.profile])
     client.get_subscription = AsyncMock(return_value=mock_crunchyroll_data.subscription)
     client.get_watchlist = AsyncMock(return_value=mock_crunchyroll_data.watchlist)
     client.get_watch_history = AsyncMock(return_value=mock_crunchyroll_data.history)
+    client.get_watch_history_with_total = AsyncMock(
+        return_value=(mock_crunchyroll_data.history, len(mock_crunchyroll_data.history))
+    )
     client.get_continue_watching = AsyncMock(return_value=mock_crunchyroll_data.history)
     client.get_recommendations = AsyncMock(
         return_value=mock_crunchyroll_data.recommendations

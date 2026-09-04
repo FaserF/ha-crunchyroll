@@ -128,11 +128,11 @@ Adding your Crunchyroll account is done entirely through the Home Assistant UI. 
 1. Navigate to **Settings > Devices & Services** in Home Assistant.
 2. Click **Add Integration** and search for **Crunchyroll**.
 3. Fill in your credentials:
-   - **Email / Username**: Your Crunchyroll account login email.
+   - **Email / Username**: Your Crunchyroll account login email or username.
    - **Password**: Your Crunchyroll account password.
-   - **Locale** *(Optional)*: Content localization language (e.g. `en-US`, `de-DE`, `fr-FR`). Default: `en-US`.
-   - **Preferred Audio Language** *(Optional)*: Desired dubbing track (e.g. `ja-JP`, `de-DE`, `en-US`). Default: `ja-JP`.
-4. Click **Submit**. The integration validates your credentials against the OAuth2 endpoint and configures all entities immediately.
+   > **Note**: Your content locale and preferred audio language are automatically detected and imported directly from your Crunchyroll account profile settings.
+4. If your Crunchyroll account has **multiple profiles**, a second setup screen prompts you to choose which profile to track (defaults to your primary profile).
+5. Click **Submit**. The integration validates your credentials against the OAuth2 endpoint and configures all entities immediately.
 
 ---
 
@@ -142,9 +142,11 @@ After setup, click **Configure** on the integration page to customize settings a
 
 | Option | Description | Default |
 |:---|:---|:---:|
-| **Scan Interval (seconds)** | How frequently to poll profile, watch history, and recommendations. | `300` (5 min) |
+| **Profile** *(Multi-profile only)* | Switch between Crunchyroll profiles on your account at any time. | Current Profile |
+| **Scan Interval (seconds)** | How frequently to poll profile, watch history, and recommendations (min. 3600s). | `86400` (24h) |
 | **Locale** | Content localization language code for titles and descriptions (`en-US`, `de-DE`, etc.). | `en-US` |
 | **Preferred Audio Language** | Preferred audio dub language filter for catalog and recommendations (`ja-JP`, `de-DE`, etc.). | `ja-JP` |
+| **Automatically remove watched anime from watchlist on sync** | Automatically deletes completed anime series from your personal watchlist whenever coordinator updates. | `off` / `false` |
 
 ---
 
@@ -159,6 +161,7 @@ After setup, click **Configure** on the integration page to customize settings a
 | `sensor.crunchyroll_<user>_new_episodes_for_watched` | Sensor | **Enabled** | New Episodes Count for Watched Shows | `latest_episode_title`, `latest_series_title`, `latest_episode_number`, `latest_release_date`, `latest_image_url`, `new_episodes_for_watched` |
 | `sensor.crunchyroll_<user>_simulcasts` | Sensor | **Enabled** | Current Season Simulcasts Count | `latest_simulcast_title`, `latest_simulcast_id`, `latest_simulcast_image`, `latest_simulcast_url`, `simulcasts` |
 | `calendar.crunchyroll_<user>_releases` | Calendar | **Enabled** | Calendar Entity | Real-time release schedules, episode titles, durations, stream URLs, and start/end times |
+| `button.crunchyroll_<user>_clean_watched_from_watchlist` | Button | **Enabled** | Button Entity | Triggers instant cleanup of fully watched/completed anime from your watchlist |
 | `sensor.crunchyroll_<user>_new_animes` | Sensor | *Disabled* | New Catalog Releases Count | `latest_release_title`, `latest_release_id`, `latest_release_image`, `latest_release_url`, `new_animes` |
 | `sensor.crunchyroll_<user>_popular_animes` | Sensor | *Disabled* | Trending Series Count | `top_popular_title`, `top_popular_id`, `top_popular_image`, `top_popular_url`, `popular_animes` |
 | `sensor.crunchyroll_<user>_movies` | Sensor | *Disabled* | Anime Movies Catalog Count | `latest_movie_title`, `latest_movie_id`, `latest_movie_image`, `latest_movie_url`, `movies` |
