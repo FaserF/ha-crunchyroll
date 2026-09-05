@@ -8,6 +8,11 @@ from uuid import uuid4
 import httpx
 import jwt
 
+try:
+    from homeassistant.util.ssl import get_default_context
+except ImportError:
+    get_default_context = None  # type: ignore[assignment]
+
 from .exceptions import (
     AuthenticationError,
     ConnectionError,
@@ -68,8 +73,15 @@ class CrunchyrollClient:
         self.profile_id = profile_id
         self.external_id = external_id
 
-        self._client = http_client or httpx.AsyncClient(timeout=20.0)
-        self._owns_client = http_client is None
+        if http_client is not None:
+            self._client = http_client
+            self._owns_client = False
+        else:
+            client_kwargs: dict[str, Any] = {"timeout": 20.0}
+            if get_default_context is not None:
+                client_kwargs["verify"] = get_default_context()
+            self._client = httpx.AsyncClient(**client_kwargs)
+            self._owns_client = True
 
     async def close(self) -> None:
         if self._owns_client:

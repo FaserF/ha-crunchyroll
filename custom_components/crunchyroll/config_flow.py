@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+from uuid import uuid4
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -18,6 +19,7 @@ from .api.exceptions import AuthenticationError, ConnectionError, CrunchyrollErr
 from .const import (
     CONF_AUDIO_LOCALE,
     CONF_AUTO_REMOVE_WATCHED_FROM_WATCHLIST,
+    CONF_DEVICE_ID,
     CONF_EMAIL,
     CONF_LOCALE,
     CONF_PASSWORD,
@@ -58,9 +60,11 @@ class CrunchyrollConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             email = user_input[CONF_EMAIL]
+            device_id = self._user_input.get(CONF_DEVICE_ID) or str(uuid4())
             client = CrunchyrollClient(
                 email=email,
                 password=user_input[CONF_PASSWORD],
+                device_id=device_id,
             )
             try:
                 await client.login()
@@ -76,7 +80,7 @@ class CrunchyrollConfigFlow(ConfigFlow, domain=DOMAIN):
                 _LOGGER.exception("Unexpected error during Crunchyroll login: %s", exc)
                 errors["base"] = "unknown"
             else:
-                self._user_input = user_input
+                self._user_input = {**user_input, CONF_DEVICE_ID: device_id}
                 self._profiles = profiles
 
                 primary_account_id = (
@@ -100,10 +104,10 @@ class CrunchyrollConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_profile(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Handle profile selection if account has multiple profiles."""
+        """Handle profile selection step if multiple profiles exist."""
         if user_input is not None:
             chosen_id = user_input[CONF_PROFILE_ID]
-            selected = next(
+            selected_profile = next(
                 (
                     p
                     for p in self._profiles
@@ -111,7 +115,7 @@ class CrunchyrollConfigFlow(ConfigFlow, domain=DOMAIN):
                 ),
                 self._profiles[0],
             )
-            return self._create_entry_from_profile(selected)
+            return self._create_entry_from_profile(selected_profile)
 
         profile_options = {
             (p.profile_id or p.account_id): p.profile_name or p.username or p.profile_id
@@ -142,6 +146,7 @@ class CrunchyrollConfigFlow(ConfigFlow, domain=DOMAIN):
         entry_data = {
             CONF_EMAIL: self._user_input[CONF_EMAIL],
             CONF_PASSWORD: self._user_input[CONF_PASSWORD],
+            CONF_DEVICE_ID: self._user_input.get(CONF_DEVICE_ID) or str(uuid4()),
             CONF_PROFILE_ID: profile.profile_id or profile.account_id,
             CONF_LOCALE: detected_locale,
             CONF_AUDIO_LOCALE: detected_audio,
@@ -192,9 +197,13 @@ class CrunchyrollOptionsFlowHandler(OptionsFlow):
                 except Exception:  # noqa: BLE001
                     self._profiles = []
             if not self._profiles:
+                device_id = self.config_entry.data.get(
+                    CONF_DEVICE_ID, self.config_entry.entry_id
+                )
                 client = CrunchyrollClient(
                     email=self.config_entry.data[CONF_EMAIL],
                     password=self.config_entry.data[CONF_PASSWORD],
+                    device_id=device_id,
                 )
                 try:
                     await client.login()

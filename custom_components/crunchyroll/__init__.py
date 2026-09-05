@@ -10,6 +10,7 @@ from homeassistant.core import HomeAssistant
 from .api.client import CrunchyrollClient
 from .const import (
     CONF_AUDIO_LOCALE,
+    CONF_DEVICE_ID,
     CONF_EMAIL,
     CONF_LOCALE,
     CONF_PASSWORD,
@@ -54,12 +55,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entry.data.get(CONF_PROFILE_ID),
     )
 
+    device_id = entry.data.get(CONF_DEVICE_ID, entry.entry_id)
+
     client = CrunchyrollClient(
         email=entry.data[CONF_EMAIL],
         password=entry.data[CONF_PASSWORD],
         locale=locale,
         preferred_audio_language=audio_locale,
         profile_id=profile_id,
+        device_id=device_id,
     )
 
     coordinator = CrunchyrollDataUpdateCoordinator(

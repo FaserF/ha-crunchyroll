@@ -67,7 +67,9 @@ async def test_sensor_setup_and_state(
         from homeassistant.helpers import device_registry as dr
 
         dev_reg = dr.async_get(hass)
-        device = dev_reg.async_get_device(identifiers={(DOMAIN, "acc-12345")})
+        device = dev_reg.async_get_device_by_identifier(DOMAIN, "acc-12345")
+        if device is None:
+            device = dev_reg.async_get_device(identifiers={(DOMAIN, "acc-12345")})
         assert device is not None
         assert device.configuration_url == "https://www.crunchyroll.com"
 

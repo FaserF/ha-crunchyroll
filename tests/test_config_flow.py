@@ -46,6 +46,7 @@ async def test_flow_user_success(hass: HomeAssistant, mock_crunchyroll_client) -
         assert result2["data"][CONF_EMAIL] == "test@example.com"
         assert result2["data"][CONF_LOCALE] == "de-DE"
         assert result2["data"][CONF_AUDIO_LOCALE] == "ja-JP"
+        assert len(result2["data"]["device_id"]) > 0
 
 
 async def test_flow_user_invalid_auth(

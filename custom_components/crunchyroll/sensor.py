@@ -152,9 +152,8 @@ class CrunchyrollAccountSensor(_BaseCrunchyrollSensor):
                 "title": item.title,
                 "type": item.type,
                 "image_url": item.image_url,
-                "description": item.description,
             }
-            for item in data.watchlist[:25]
+            for item in data.watchlist[:10]
         ]
 
         recommendations_items = [
@@ -163,9 +162,8 @@ class CrunchyrollAccountSensor(_BaseCrunchyrollSensor):
                 "title": item.title,
                 "type": item.type,
                 "image_url": item.image_url,
-                "description": item.description,
             }
-            for item in data.recommendations[:15]
+            for item in data.recommendations[:10]
         ]
 
         return {
@@ -183,8 +181,8 @@ class CrunchyrollAccountSensor(_BaseCrunchyrollSensor):
             ATTR_HISTORY_COUNT: data.total_history_count or len(data.history),
             ATTR_LAST_WATCHED: last_watched_dict,
             ATTR_RECOMMENDATIONS: recommendations_items,
-            ATTR_CUSTOM_LISTS: [cl.to_dict() for cl in data.custom_lists],
-            ATTR_CATEGORIES: [c.to_dict() for c in data.categories],
+            ATTR_CUSTOM_LISTS: [cl.to_dict() for cl in data.custom_lists[:10]],
+            ATTR_CATEGORIES: [c.to_dict() for c in data.categories[:15]],
         }
 
 
@@ -213,15 +211,15 @@ class CrunchyrollWatchlistSensor(_BaseCrunchyrollSensor):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return all watchlist items with rich attributes."""
+        """Return watchlist items (up to 10) with rich attributes."""
         if not self.coordinator.data:
             return {}
 
-        items = [item.to_dict() for item in self.coordinator.data.watchlist]
+        items = [item.to_dict() for item in self.coordinator.data.watchlist[:10]]
         latest = items[0] if items else {}
 
         return {
-            ATTR_WATCHLIST_COUNT: len(items),
+            ATTR_WATCHLIST_COUNT: len(self.coordinator.data.watchlist),
             "latest_added_title": latest.get("title", ""),
             "latest_added_id": latest.get("id", ""),
             "latest_added_image": latest.get("image_url", ""),
@@ -255,13 +253,13 @@ class CrunchyrollCompletedAnimesSensor(_BaseCrunchyrollSensor):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return list of completed animes with details."""
+        """Return list of completed animes (up to 10) with details."""
         if not self.coordinator.data:
             return {}
-        items = [a.to_dict() for a in self.coordinator.data.completed_animes]
+        items = [a.to_dict() for a in self.coordinator.data.completed_animes[:10]]
         latest = items[0] if items else {}
         return {
-            "count": len(items),
+            "count": len(self.coordinator.data.completed_animes),
             "latest_completed_series": latest.get("series_title", ""),
             "latest_completed_episode": latest.get("episode_title", ""),
             "latest_completed_episode_number": latest.get("episode_number", ""),
@@ -297,13 +295,13 @@ class CrunchyrollInProgressAnimesSensor(_BaseCrunchyrollSensor):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return list of in-progress animes with details."""
+        """Return list of in-progress animes (up to 10) with details."""
         if not self.coordinator.data:
             return {}
-        items = [a.to_dict() for a in self.coordinator.data.in_progress_animes]
+        items = [a.to_dict() for a in self.coordinator.data.in_progress_animes[:10]]
         latest = items[0] if items else {}
         return {
-            "count": len(items),
+            "count": len(self.coordinator.data.in_progress_animes),
             "latest_series": latest.get("series_title", ""),
             "latest_episode": latest.get("episode_title", ""),
             "latest_episode_number": latest.get("episode_number", ""),
@@ -342,13 +340,13 @@ class CrunchyrollNewAnimesSensor(_BaseCrunchyrollSensor):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return list of newly released animes."""
+        """Return list of newly released animes (up to 10)."""
         if not self.coordinator.data:
             return {}
-        items = [item.to_dict() for item in self.coordinator.data.new_animes]
+        items = [item.to_dict() for item in self.coordinator.data.new_animes[:10]]
         latest = items[0] if items else {}
         return {
-            "count": len(items),
+            "count": len(self.coordinator.data.new_animes),
             "latest_release_title": latest.get("title", ""),
             "latest_release_id": latest.get("id", ""),
             "latest_release_image": latest.get("image_url", ""),
@@ -385,13 +383,13 @@ class CrunchyrollPopularAnimesSensor(_BaseCrunchyrollSensor):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return list of popular animes."""
+        """Return list of popular animes (up to 10)."""
         if not self.coordinator.data:
             return {}
-        items = [item.to_dict() for item in self.coordinator.data.popular_animes]
+        items = [item.to_dict() for item in self.coordinator.data.popular_animes[:10]]
         latest = items[0] if items else {}
         return {
-            "count": len(items),
+            "count": len(self.coordinator.data.popular_animes),
             "top_popular_title": latest.get("title", ""),
             "top_popular_id": latest.get("id", ""),
             "top_popular_image": latest.get("image_url", ""),
@@ -462,13 +460,13 @@ class CrunchyrollSimulcastsSensor(_BaseCrunchyrollSensor):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return list of simulcast animes."""
+        """Return list of simulcast animes (up to 10)."""
         if not self.coordinator.data:
             return {}
-        items = [item.to_dict() for item in self.coordinator.data.simulcasts]
+        items = [item.to_dict() for item in self.coordinator.data.simulcasts[:10]]
         latest = items[0] if items else {}
         return {
-            "count": len(items),
+            "count": len(self.coordinator.data.simulcasts),
             "latest_simulcast_title": latest.get("title", ""),
             "latest_simulcast_id": latest.get("id", ""),
             "latest_simulcast_image": latest.get("image_url", ""),
@@ -504,13 +502,13 @@ class CrunchyrollMoviesSensor(_BaseCrunchyrollSensor):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return list of movies."""
+        """Return list of movies (up to 10)."""
         if not self.coordinator.data:
             return {}
-        items = [item.to_dict() for item in self.coordinator.data.movies]
+        items = [item.to_dict() for item in self.coordinator.data.movies[:10]]
         latest = items[0] if items else {}
         return {
-            "count": len(items),
+            "count": len(self.coordinator.data.movies),
             "latest_movie_title": latest.get("title", ""),
             "latest_movie_id": latest.get("id", ""),
             "latest_movie_image": latest.get("image_url", ""),
@@ -544,15 +542,16 @@ class CrunchyrollNewEpisodesForWatchedSensor(_BaseCrunchyrollSensor):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return list of new episodes for watched anime."""
+        """Return list of new episodes for watched anime (up to 10)."""
         if not self.coordinator.data:
             return {}
         items = [
-            item.to_dict() for item in self.coordinator.data.new_episodes_for_watched
+            item.to_dict()
+            for item in self.coordinator.data.new_episodes_for_watched[:10]
         ]
         latest = items[0] if items else {}
         return {
-            "count": len(items),
+            "count": len(self.coordinator.data.new_episodes_for_watched),
             "latest_episode_title": latest.get("title", ""),
             "latest_series_title": latest.get("series_title", ""),
             "latest_episode_number": latest.get("episode_number", ""),
@@ -590,13 +589,13 @@ class CrunchyrollNewEpisodesSensor(_BaseCrunchyrollSensor):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return list of new episodes."""
+        """Return list of new episodes (up to 10)."""
         if not self.coordinator.data:
             return {}
-        items = [item.to_dict() for item in self.coordinator.data.new_episodes]
+        items = [item.to_dict() for item in self.coordinator.data.new_episodes[:10]]
         latest = items[0] if items else {}
         return {
-            "count": len(items),
+            "count": len(self.coordinator.data.new_episodes),
             "latest_episode_title": latest.get("title", ""),
             "latest_series_title": latest.get("series_title", ""),
             "latest_episode_number": latest.get("episode_number", ""),
