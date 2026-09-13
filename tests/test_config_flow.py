@@ -291,7 +291,9 @@ async def test_reauth_flow_invalid_auth(
     )
     entry.add_to_hass(hass)
 
-    mock_crunchyroll_client.login.side_effect = AuthenticationError("Invalid credentials")
+    mock_crunchyroll_client.login.side_effect = AuthenticationError(
+        "Invalid credentials"
+    )
 
     with patch(
         "custom_components.crunchyroll.config_flow.CrunchyrollClient",
@@ -349,4 +351,3 @@ async def test_options_flow_update_credentials(
         assert entry.data[CONF_EMAIL] == "updated@example.com"
         assert entry.data[CONF_PASSWORD] == "updated_password"
         assert entry.options[CONF_SCAN_INTERVAL] == 7200
-

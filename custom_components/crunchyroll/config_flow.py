@@ -101,9 +101,7 @@ class CrunchyrollConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_reauth(
-        self, entry_data: dict[str, Any]
-    ) -> ConfigFlowResult:
+    async def async_step_reauth(self, entry_data: dict[str, Any]) -> ConfigFlowResult:
         """Handle reauthorization request from Home Assistant."""
         return await self.async_step_reauth_confirm()
 
@@ -135,7 +133,9 @@ class CrunchyrollConfigFlow(ConfigFlow, domain=DOMAIN):
             except CrunchyrollError:
                 errors["base"] = "unknown"
             except Exception as exc:  # noqa: BLE001
-                _LOGGER.exception("Unexpected error during Crunchyroll re-auth: %s", exc)
+                _LOGGER.exception(
+                    "Unexpected error during Crunchyroll re-auth: %s", exc
+                )
                 errors["base"] = "unknown"
             else:
                 primary_account_id = (
