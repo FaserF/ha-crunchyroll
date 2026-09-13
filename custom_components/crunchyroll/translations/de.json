@@ -15,6 +15,14 @@
         "data": {
           "profile_id": "Profil"
         }
+      },
+      "reauth_confirm": {
+        "title": "Erneut bei Crunchyroll anmelden",
+        "description": "Deine Crunchyroll-Zugangsdaten sind ungültig oder abgelaufen. Bitte gib deine Anmeldedaten erneut ein.",
+        "data": {
+          "email": "E-Mail oder Benutzername",
+          "password": "Passwort"
+        }
       }
     },
     "error": {
@@ -23,7 +31,8 @@
       "unknown": "Unerwarteter Fehler aufgetreten."
     },
     "abort": {
-      "already_configured": "Dieses Crunchyroll-Konto ist bereits konfiguriert."
+      "already_configured": "Dieses Crunchyroll-Konto ist bereits konfiguriert.",
+      "account_mismatch": "Das angegebene Crunchyroll-Konto stimmt nicht mit dem bestehenden Eintrag überein."
     }
   },
   "options": {
@@ -32,6 +41,8 @@
         "title": "Crunchyroll Einstellungen",
         "description": "Aktualisierungsintervall (mindestens 3600 Sekunden / 1 Stunde) und Spracheinstellungen anpassen.",
         "data": {
+          "email": "E-Mail oder Benutzername",
+          "password": "Passwort",
           "profile_id": "Profil",
           "scan_interval": "Aktualisierungsintervall (Sekunden, min. 3600)",
           "locale": "Inhaltssprache",
@@ -41,7 +52,10 @@
       }
     },
     "error": {
-      "min_scan_interval": "Das Aktualisierungsintervall muss mindestens 3600 Sekunden (1 Stunde) betragen."
+      "min_scan_interval": "Das Aktualisierungsintervall muss mindestens 3600 Sekunden (1 Stunde) betragen.",
+      "invalid_auth": "Ungültige E-Mail/Benutzername oder falsches Passwort.",
+      "cannot_connect": "Verbindung zu den Crunchyroll-Servern fehlgeschlagen.",
+      "unknown": "Unerwarteter Fehler aufgetreten."
     }
   },
   "entity": {

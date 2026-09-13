@@ -15,6 +15,14 @@
         "data": {
           "profile_id": "Profile"
         }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate with Crunchyroll",
+        "description": "Your Crunchyroll credentials are no longer valid. Please enter your credentials to reconnect.",
+        "data": {
+          "email": "Email or Username",
+          "password": "Password"
+        }
       }
     },
     "error": {
@@ -23,7 +31,8 @@
       "unknown": "Unexpected error occurred."
     },
     "abort": {
-      "already_configured": "This Crunchyroll account is already configured."
+      "already_configured": "This Crunchyroll account is already configured.",
+      "account_mismatch": "The account provided does not match the existing account."
     }
   },
   "options": {
@@ -32,6 +41,8 @@
         "title": "Crunchyroll Options",
         "description": "Adjust polling interval (minimum 3600 seconds / 1 hour) and language preferences.",
         "data": {
+          "email": "Email or Username",
+          "password": "Password",
           "profile_id": "Profile",
           "scan_interval": "Update Interval (seconds, min. 3600)",
           "locale": "Content Locale",
@@ -41,7 +52,10 @@
       }
     },
     "error": {
-      "min_scan_interval": "Update interval must be at least 3600 seconds (1 hour)."
+      "min_scan_interval": "Update interval must be at least 3600 seconds (1 hour).",
+      "invalid_auth": "Invalid email/username or password.",
+      "cannot_connect": "Failed to connect to Crunchyroll servers.",
+      "unknown": "Unexpected error occurred."
     }
   },
   "entity": {

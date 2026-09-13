@@ -101,6 +101,76 @@ class CrunchyrollConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
+    async def async_step_reauth(
+        self, entry_data: dict[str, Any]
+    ) -> ConfigFlowResult:
+        """Handle reauthorization request from Home Assistant."""
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Confirm reauth with updated credentials."""
+        errors: dict[str, str] = {}
+        reauth_entry = self._get_reauth_entry()
+
+        if user_input is not None:
+            email = user_input[CONF_EMAIL]
+            password = user_input[CONF_PASSWORD]
+            device_id = reauth_entry.data.get(CONF_DEVICE_ID) or str(uuid4())
+
+            client = CrunchyrollClient(
+                email=email,
+                password=password,
+                device_id=device_id,
+            )
+            try:
+                await client.login()
+                profiles = await client.get_profiles()
+                await client.close()
+            except AuthenticationError:
+                errors["base"] = "invalid_auth"
+            except ConnectionError:
+                errors["base"] = "cannot_connect"
+            except CrunchyrollError:
+                errors["base"] = "unknown"
+            except Exception as exc:  # noqa: BLE001
+                _LOGGER.exception("Unexpected error during Crunchyroll re-auth: %s", exc)
+                errors["base"] = "unknown"
+            else:
+                primary_account_id = (
+                    profiles[0].account_id or profiles[0].profile_id or email
+                )
+                await self.async_set_unique_id(primary_account_id)
+                self._abort_if_unique_id_mismatch(reason="account_mismatch")
+
+                new_data = {
+                    **reauth_entry.data,
+                    CONF_EMAIL: email,
+                    CONF_PASSWORD: password,
+                    CONF_DEVICE_ID: device_id,
+                }
+                return self.async_update_reload_and_abort(
+                    reauth_entry,
+                    data=new_data,
+                )
+
+        schema = vol.Schema(
+            {
+                vol.Required(
+                    CONF_EMAIL,
+                    default=reauth_entry.data.get(CONF_EMAIL, ""),
+                ): str,
+                vol.Required(CONF_PASSWORD): str,
+            }
+        )
+
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=schema,
+            errors=errors,
+        )
+
     async def async_step_profile(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -186,7 +256,41 @@ class CrunchyrollOptionsFlowHandler(OptionsFlow):
             ):
                 errors[CONF_SCAN_INTERVAL] = "min_scan_interval"
             else:
-                return self.async_create_entry(title="", data=user_input)
+                # Extract any credentials to update entry.data if provided
+                new_email = user_input.pop(CONF_EMAIL, None)
+                new_password = user_input.pop(CONF_PASSWORD, None)
+                if new_email or new_password:
+                    updated_data = dict(self.config_entry.data)
+                    if new_email:
+                        updated_data[CONF_EMAIL] = new_email
+                    if new_password:
+                        updated_data[CONF_PASSWORD] = new_password
+
+                    device_id = updated_data.get(
+                        CONF_DEVICE_ID, self.config_entry.entry_id
+                    )
+                    test_client = CrunchyrollClient(
+                        email=updated_data[CONF_EMAIL],
+                        password=updated_data[CONF_PASSWORD],
+                        device_id=device_id,
+                    )
+                    try:
+                        await test_client.login()
+                        await test_client.close()
+                    except AuthenticationError:
+                        errors["base"] = "invalid_auth"
+                    except ConnectionError:
+                        errors["base"] = "cannot_connect"
+                    except Exception:  # noqa: BLE001
+                        errors["base"] = "unknown"
+
+                    if not errors:
+                        self.hass.config_entries.async_update_entry(
+                            self.config_entry, data=updated_data
+                        )
+
+                if not errors:
+                    return self.async_create_entry(title="", data=user_input)
 
         # Retrieve available profiles via coordinator or direct client
         if not self._profiles:
@@ -223,6 +327,17 @@ class CrunchyrollOptionsFlowHandler(OptionsFlow):
         )
 
         schema_fields: dict[Any, Any] = {}
+
+        # Allow updating credentials directly in options flow
+        schema_fields[
+            vol.Optional(CONF_EMAIL, default=self.config_entry.data.get(CONF_EMAIL, ""))
+        ] = str
+        schema_fields[
+            vol.Optional(
+                CONF_PASSWORD,
+                default=self.config_entry.data.get(CONF_PASSWORD, ""),
+            )
+        ] = str
 
         if len(self._profiles) > 1:
             profile_options = {

@@ -239,3 +239,114 @@ async def test_options_flow_multiple_profiles(
         )
         assert result2["type"] == data_entry_flow.FlowResultType.CREATE_ENTRY
         assert result2["data"][CONF_PROFILE_ID] == "prof-2"
+
+
+async def test_reauth_flow_success(
+    hass: HomeAssistant, mock_crunchyroll_client
+) -> None:
+    """Test reauth flow successfully updates config entry credentials."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="acc-123",
+        data={
+            CONF_EMAIL: "old@example.com",
+            CONF_PASSWORD: "old_password",
+            "device_id": "test-device-id",
+        },
+    )
+    entry.add_to_hass(hass)
+
+    with patch(
+        "custom_components.crunchyroll.config_flow.CrunchyrollClient",
+        return_value=mock_crunchyroll_client,
+    ):
+        result = await entry.start_reauth_flow(hass)
+        assert result["type"] == data_entry_flow.FlowResultType.FORM
+        assert result["step_id"] == "reauth_confirm"
+
+        result2 = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {
+                CONF_EMAIL: "new@example.com",
+                CONF_PASSWORD: "new_password",
+            },
+        )
+        assert result2["type"] == data_entry_flow.FlowResultType.ABORT
+        assert result2["reason"] == "reauth_successful"
+        assert entry.data[CONF_EMAIL] == "new@example.com"
+        assert entry.data[CONF_PASSWORD] == "new_password"
+
+
+async def test_reauth_flow_invalid_auth(
+    hass: HomeAssistant, mock_crunchyroll_client
+) -> None:
+    """Test reauth flow handles invalid credentials."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="acc-123",
+        data={
+            CONF_EMAIL: "old@example.com",
+            CONF_PASSWORD: "old_password",
+        },
+    )
+    entry.add_to_hass(hass)
+
+    mock_crunchyroll_client.login.side_effect = AuthenticationError("Invalid credentials")
+
+    with patch(
+        "custom_components.crunchyroll.config_flow.CrunchyrollClient",
+        return_value=mock_crunchyroll_client,
+    ):
+        result = await entry.start_reauth_flow(hass)
+        assert result["type"] == data_entry_flow.FlowResultType.FORM
+        assert result["step_id"] == "reauth_confirm"
+
+        result2 = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {
+                CONF_EMAIL: "old@example.com",
+                CONF_PASSWORD: "wrong_password",
+            },
+        )
+        assert result2["type"] == data_entry_flow.FlowResultType.FORM
+        assert result2["errors"] == {"base": "invalid_auth"}
+
+
+async def test_options_flow_update_credentials(
+    hass: HomeAssistant, mock_crunchyroll_client
+) -> None:
+    """Test updating credentials directly via options flow."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_EMAIL: "old@example.com",
+            CONF_PASSWORD: "old_password",
+            "device_id": "test-device-id",
+        },
+        options={CONF_SCAN_INTERVAL: 3600},
+    )
+    entry.add_to_hass(hass)
+
+    with patch(
+        "custom_components.crunchyroll.config_flow.CrunchyrollClient",
+        return_value=mock_crunchyroll_client,
+    ):
+        result = await hass.config_entries.options.async_init(entry.entry_id)
+        assert result["type"] == data_entry_flow.FlowResultType.FORM
+        assert result["step_id"] == "init"
+
+        result2 = await hass.config_entries.options.async_configure(
+            result["flow_id"],
+            user_input={
+                CONF_EMAIL: "updated@example.com",
+                CONF_PASSWORD: "updated_password",
+                CONF_SCAN_INTERVAL: 7200,
+                CONF_LOCALE: "de-DE",
+                CONF_AUDIO_LOCALE: "ja-JP",
+            },
+        )
+        assert result2["type"] == data_entry_flow.FlowResultType.CREATE_ENTRY
+        assert entry.data[CONF_EMAIL] == "updated@example.com"
+        assert entry.data[CONF_PASSWORD] == "updated_password"
+        assert entry.options[CONF_SCAN_INTERVAL] == 7200
+
