@@ -247,7 +247,7 @@ async def test_reauth_flow_success(
     """Test reauth flow successfully updates config entry credentials."""
     entry = MockConfigEntry(
         domain=DOMAIN,
-        unique_id="acc-123",
+        unique_id="acc-12345",
         data={
             CONF_EMAIL: "old@example.com",
             CONF_PASSWORD: "old_password",

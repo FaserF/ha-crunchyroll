@@ -256,14 +256,19 @@ class CrunchyrollOptionsFlowHandler(OptionsFlow):
             ):
                 errors[CONF_SCAN_INTERVAL] = "min_scan_interval"
             else:
-                # Extract any credentials to update entry.data if provided
+                # Extract any credentials to update entry.data if provided and changed
                 new_email = user_input.pop(CONF_EMAIL, None)
                 new_password = user_input.pop(CONF_PASSWORD, None)
-                if new_email or new_password:
+                curr_email = self.config_entry.data.get(CONF_EMAIL)
+                curr_password = self.config_entry.data.get(CONF_PASSWORD)
+                email_changed = bool(new_email and new_email != curr_email)
+                password_changed = bool(new_password and new_password != curr_password)
+
+                if email_changed or password_changed:
                     updated_data = dict(self.config_entry.data)
-                    if new_email:
+                    if email_changed and new_email:
                         updated_data[CONF_EMAIL] = new_email
-                    if new_password:
+                    if password_changed and new_password:
                         updated_data[CONF_PASSWORD] = new_password
 
                     device_id = updated_data.get(
