@@ -12,6 +12,9 @@ CONF_AUDIO_LOCALE: Final = "preferred_audio_language"
 CONF_SCAN_INTERVAL: Final = "scan_interval"
 CONF_AUTO_REMOVE_WATCHED_FROM_WATCHLIST: Final = "auto_remove_watched_from_watchlist"
 CONF_DEVICE_ID: Final = "device_id"
+CONF_ACCESS_TOKEN: Final = "access_token"
+CONF_REFRESH_TOKEN: Final = "refresh_token"
+CONF_TOKEN_EXPIRY: Final = "token_expiry"
 
 DEFAULT_SCAN_INTERVAL: Final = 86400  # 24 hours
 MIN_SCAN_INTERVAL: Final = 3600  # 1 hour

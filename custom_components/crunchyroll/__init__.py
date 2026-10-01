@@ -9,13 +9,16 @@ from homeassistant.core import HomeAssistant
 
 from .api.client import CrunchyrollClient
 from .const import (
+    CONF_ACCESS_TOKEN,
     CONF_AUDIO_LOCALE,
     CONF_DEVICE_ID,
     CONF_EMAIL,
     CONF_LOCALE,
     CONF_PASSWORD,
     CONF_PROFILE_ID,
+    CONF_REFRESH_TOKEN,
     CONF_SCAN_INTERVAL,
+    CONF_TOKEN_EXPIRY,
     DEFAULT_AUDIO_LOCALE,
     DEFAULT_LOCALE,
     DEFAULT_SCAN_INTERVAL,
@@ -57,6 +60,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     device_id = entry.data.get(CONF_DEVICE_ID, entry.entry_id)
 
+    def _async_on_token_refresh(
+        access_token: str, refresh_token: str, token_expiry: float
+    ) -> None:
+        """Persist refreshed tokens in the config entry."""
+        hass.config_entries.async_update_entry(
+            entry,
+            data={
+                **entry.data,
+                CONF_DEVICE_ID: device_id,
+                CONF_ACCESS_TOKEN: access_token,
+                CONF_REFRESH_TOKEN: refresh_token,
+                CONF_TOKEN_EXPIRY: token_expiry,
+            },
+        )
+
     client = CrunchyrollClient(
         email=entry.data[CONF_EMAIL],
         password=entry.data[CONF_PASSWORD],
@@ -64,6 +82,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         preferred_audio_language=audio_locale,
         profile_id=profile_id,
         device_id=device_id,
+        access_token=entry.data.get(CONF_ACCESS_TOKEN),
+        refresh_token=entry.data.get(CONF_REFRESH_TOKEN),
+        token_expiry=entry.data.get(CONF_TOKEN_EXPIRY),
+        on_token_refresh=_async_on_token_refresh,
     )
 
     coordinator = CrunchyrollDataUpdateCoordinator(

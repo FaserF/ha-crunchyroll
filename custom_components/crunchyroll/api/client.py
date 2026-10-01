@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import inspect
 import logging
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
@@ -57,6 +59,7 @@ class CrunchyrollClient:
         profile_id: str | None = None,
         external_id: str | None = None,
         http_client: httpx.AsyncClient | None = None,
+        on_token_refresh: Callable[[str, str, float], Any] | None = None,
     ) -> None:
         self.email = email
         self.password = password
@@ -72,6 +75,7 @@ class CrunchyrollClient:
         self.account_id = account_id
         self.profile_id = profile_id
         self.external_id = external_id
+        self._on_token_refresh = on_token_refresh
 
         if http_client is not None:
             self._client = http_client
@@ -124,6 +128,7 @@ class CrunchyrollClient:
                 self.account_id = data.get("account_id")
             expires = data.get("expires_in", 3888000)
             self.token_expiry = datetime.now(UTC).timestamp() + expires - 60
+            await self._notify_token_refresh()
             return True
 
         if resp.status_code in (400, 401):
@@ -133,6 +138,19 @@ class CrunchyrollClient:
         raise CrunchyrollError(
             f"Authentication failed ({resp.status_code}): {resp.text}"
         )
+
+    async def _notify_token_refresh(self) -> None:
+        if self._on_token_refresh and self.access_token and self.refresh_token:
+            try:
+                res = self._on_token_refresh(
+                    self.access_token,
+                    self.refresh_token,
+                    self.token_expiry or 0.0,
+                )
+                if inspect.isawaitable(res):
+                    await res
+            except Exception:  # noqa: BLE001
+                _LOGGER.exception("Failed to run token refresh callback")
 
     async def refresh_tokens_if_needed(self) -> None:
         if not self.access_token or not self.refresh_token:
@@ -168,6 +186,7 @@ class CrunchyrollClient:
             self.refresh_token = data.get("refresh_token")
             expires = data.get("expires_in", 3888000)
             self.token_expiry = now_ts + expires - 60
+            await self._notify_token_refresh()
             return
         _LOGGER.warning("Token refresh failed, attempting login")
         await self.login()

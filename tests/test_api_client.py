@@ -416,3 +416,38 @@ async def test_client_simulcasts_movies_and_details() -> None:
 
         playhead_res = await client.update_playhead("ep-101", 150)
         assert playhead_res is True
+
+
+@pytest.mark.asyncio
+async def test_client_token_refresh_callback() -> None:
+    """Test token refresh callback execution and persistence."""
+    cb_calls: list[tuple[str, str, float]] = []
+
+    def on_token_refresh(access_token: str, refresh_token: str, expiry: float) -> None:
+        cb_calls.append((access_token, refresh_token, expiry))
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        url_str = str(request.url)
+        if "auth/v1/token" in url_str:
+            return httpx.Response(
+                200,
+                json={
+                    "access_token": "new_tok",
+                    "refresh_token": "new_ref",
+                    "expires_in": 3600,
+                },
+            )
+        return httpx.Response(200, json={})
+
+    transport = httpx.MockTransport(handler)
+    async with httpx.AsyncClient(transport=transport) as http_client:
+        client = CrunchyrollClient(
+            email="user@test.com",
+            password="pw",
+            http_client=http_client,
+            on_token_refresh=on_token_refresh,
+        )
+        assert await client.login() is True
+        assert len(cb_calls) == 1
+        assert cb_calls[0][0] == "new_tok"
+        assert cb_calls[0][1] == "new_ref"

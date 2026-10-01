@@ -208,4 +208,7 @@ def mock_crunchyroll_client(mock_crunchyroll_data: CrunchyrollData):
     client.search = AsyncMock(return_value=mock_crunchyroll_data.watchlist)
     client.fetch_all_data = AsyncMock(return_value=mock_crunchyroll_data)
     client.is_authorized = True
+    client.access_token = "mock_access_token"
+    client.refresh_token = "mock_refresh_token"
+    client.token_expiry = 9999999999.0
     return client

@@ -17,6 +17,7 @@ from homeassistant.core import callback
 from .api.client import CrunchyrollClient
 from .api.exceptions import AuthenticationError, ConnectionError, CrunchyrollError
 from .const import (
+    CONF_ACCESS_TOKEN,
     CONF_AUDIO_LOCALE,
     CONF_AUTO_REMOVE_WATCHED_FROM_WATCHLIST,
     CONF_DEVICE_ID,
@@ -24,7 +25,9 @@ from .const import (
     CONF_LOCALE,
     CONF_PASSWORD,
     CONF_PROFILE_ID,
+    CONF_REFRESH_TOKEN,
     CONF_SCAN_INTERVAL,
+    CONF_TOKEN_EXPIRY,
     DEFAULT_AUDIO_LOCALE,
     DEFAULT_LOCALE,
     DEFAULT_SCAN_INTERVAL,
@@ -80,7 +83,13 @@ class CrunchyrollConfigFlow(ConfigFlow, domain=DOMAIN):
                 _LOGGER.exception("Unexpected error during Crunchyroll login: %s", exc)
                 errors["base"] = "unknown"
             else:
-                self._user_input = {**user_input, CONF_DEVICE_ID: device_id}
+                self._user_input = {
+                    **user_input,
+                    CONF_DEVICE_ID: device_id,
+                    CONF_ACCESS_TOKEN: client.access_token,
+                    CONF_REFRESH_TOKEN: client.refresh_token,
+                    CONF_TOKEN_EXPIRY: client.token_expiry,
+                }
                 self._profiles = profiles
 
                 primary_account_id = (
@@ -149,6 +158,9 @@ class CrunchyrollConfigFlow(ConfigFlow, domain=DOMAIN):
                     CONF_EMAIL: email,
                     CONF_PASSWORD: password,
                     CONF_DEVICE_ID: device_id,
+                    CONF_ACCESS_TOKEN: client.access_token,
+                    CONF_REFRESH_TOKEN: client.refresh_token,
+                    CONF_TOKEN_EXPIRY: client.token_expiry,
                 }
                 return self.async_update_reload_and_abort(
                     reauth_entry,
@@ -220,6 +232,9 @@ class CrunchyrollConfigFlow(ConfigFlow, domain=DOMAIN):
             CONF_PROFILE_ID: profile.profile_id or profile.account_id,
             CONF_LOCALE: detected_locale,
             CONF_AUDIO_LOCALE: detected_audio,
+            CONF_ACCESS_TOKEN: self._user_input.get(CONF_ACCESS_TOKEN),
+            CONF_REFRESH_TOKEN: self._user_input.get(CONF_REFRESH_TOKEN),
+            CONF_TOKEN_EXPIRY: self._user_input.get(CONF_TOKEN_EXPIRY),
         }
 
         title = profile.profile_name or profile.username or self._user_input[CONF_EMAIL]
