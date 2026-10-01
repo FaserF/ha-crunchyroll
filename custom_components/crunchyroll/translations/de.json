@@ -16,6 +16,10 @@
           "profile_id": "Profil"
         }
       },
+      "device_limits": {
+        "title": "Konto- und Geräte-Nutzungshinweise",
+        "description": "Erkanntes Abonnement: **{tier}**\n\n- **Geräteplatz**: Home Assistant registriert sich als 1 aktives Gerät in deiner Crunchyroll-Geräteaktivierung (maximal **{max_devices}** Geräte im Account).\n- **Gleichzeitige Streams**: Dein Abonnement erlaubt maximal **{max_streams}** gleichzeitige Streams. Home Assistant ruft ausschließlich Metadaten ab und belegt **keinen** Video-Streaming-Platz.\n\n*Hinweis: Crunchyroll stellt über die API keine Echtzeitdaten über laufende Fremdstreams oder registrierte Fremdgeräte bereit.*"
+      },
       "reauth_confirm": {
         "title": "Erneut bei Crunchyroll anmelden",
         "description": "Deine Crunchyroll-Zugangsdaten sind ungültig oder abgelaufen. Bitte gib deine Anmeldedaten erneut ein.",

@@ -54,6 +54,7 @@ class CrunchyrollConfigFlow(ConfigFlow, domain=DOMAIN):
         """Initialize config flow."""
         self._user_input: dict[str, Any] = {}
         self._profiles: list[Any] = []
+        self._subscription: Any | None = None
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -72,6 +73,7 @@ class CrunchyrollConfigFlow(ConfigFlow, domain=DOMAIN):
             try:
                 await client.login()
                 profiles = await client.get_profiles()
+                subscription = await client.get_subscription()
                 await client.close()
             except AuthenticationError:
                 errors["base"] = "invalid_auth"
@@ -91,6 +93,7 @@ class CrunchyrollConfigFlow(ConfigFlow, domain=DOMAIN):
                     CONF_TOKEN_EXPIRY: client.token_expiry,
                 }
                 self._profiles = profiles
+                self._subscription = subscription
 
                 primary_account_id = (
                     profiles[0].account_id or profiles[0].profile_id or email
@@ -98,11 +101,7 @@ class CrunchyrollConfigFlow(ConfigFlow, domain=DOMAIN):
                 await self.async_set_unique_id(primary_account_id)
                 self._abort_if_unique_id_configured()
 
-                if len(profiles) > 1:
-                    return await self.async_step_profile()
-
-                selected = profiles[0]
-                return self._create_entry_from_profile(selected)
+                return await self.async_step_device_limits()
 
         return self.async_show_form(
             step_id="user",
@@ -216,6 +215,33 @@ class CrunchyrollConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="profile",
             data_schema=schema,
+        )
+
+    async def async_step_device_limits(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Inform user about detected tier, stream limits and device registration slot."""
+        if user_input is not None:
+            if len(self._profiles) > 1:
+                return await self.async_step_profile()
+            selected = self._profiles[0]
+            return self._create_entry_from_profile(selected)
+
+        sub = self._subscription
+        tier = getattr(sub, "tier", "free") if sub else "free"
+        max_streams = getattr(sub, "max_simultaneous_streams", 1) if sub else 1
+        max_devices = getattr(sub, "max_registered_devices", 20) if sub else 20
+
+        placeholders = {
+            "tier": tier.replace("_", " ").title(),
+            "max_streams": str(max_streams),
+            "max_devices": str(max_devices),
+        }
+
+        return self.async_show_form(
+            step_id="device_limits",
+            data_schema=vol.Schema({}),
+            description_placeholders=placeholders,
         )
 
     def _create_entry_from_profile(self, profile: Any) -> ConfigFlowResult:

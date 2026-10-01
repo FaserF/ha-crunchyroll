@@ -41,12 +41,19 @@ async def test_flow_user_success(hass: HomeAssistant, mock_crunchyroll_client) -
                 CONF_PASSWORD: "secret_password",
             },
         )
-        assert result2["type"] == data_entry_flow.FlowResultType.CREATE_ENTRY
-        assert result2["title"] == "Crunchyroll (AnimeHero)"
-        assert result2["data"][CONF_EMAIL] == "test@example.com"
-        assert result2["data"][CONF_LOCALE] == "de-DE"
-        assert result2["data"][CONF_AUDIO_LOCALE] == "ja-JP"
-        assert len(result2["data"]["device_id"]) > 0
+        assert result2["type"] == data_entry_flow.FlowResultType.FORM
+        assert result2["step_id"] == "device_limits"
+
+        result3 = await hass.config_entries.flow.async_configure(
+            result2["flow_id"],
+            {},
+        )
+        assert result3["type"] == data_entry_flow.FlowResultType.CREATE_ENTRY
+        assert result3["title"] == "Crunchyroll (AnimeHero)"
+        assert result3["data"][CONF_EMAIL] == "test@example.com"
+        assert result3["data"][CONF_LOCALE] == "de-DE"
+        assert result3["data"][CONF_AUDIO_LOCALE] == "ja-JP"
+        assert len(result3["data"]["device_id"]) > 0
 
 
 async def test_flow_user_invalid_auth(
@@ -177,19 +184,26 @@ async def test_flow_user_multiple_profiles(
             },
         )
         assert result2["type"] == data_entry_flow.FlowResultType.FORM
-        assert result2["step_id"] == "profile"
+        assert result2["step_id"] == "device_limits"
 
         result3 = await hass.config_entries.flow.async_configure(
             result2["flow_id"],
+            {},
+        )
+        assert result3["type"] == data_entry_flow.FlowResultType.FORM
+        assert result3["step_id"] == "profile"
+
+        result4 = await hass.config_entries.flow.async_configure(
+            result3["flow_id"],
             {
                 CONF_PROFILE_ID: "prof-2",
             },
         )
-        assert result3["type"] == data_entry_flow.FlowResultType.CREATE_ENTRY
-        assert result3["title"] == "Crunchyroll (Profile Two)"
-        assert result3["data"][CONF_PROFILE_ID] == "prof-2"
-        assert result3["data"][CONF_LOCALE] == "de-DE"
-        assert result3["data"][CONF_AUDIO_LOCALE] == "de-DE"
+        assert result4["type"] == data_entry_flow.FlowResultType.CREATE_ENTRY
+        assert result4["title"] == "Crunchyroll (Profile Two)"
+        assert result4["data"][CONF_PROFILE_ID] == "prof-2"
+        assert result4["data"][CONF_LOCALE] == "de-DE"
+        assert result4["data"][CONF_AUDIO_LOCALE] == "de-DE"
 
 
 async def test_options_flow_multiple_profiles(

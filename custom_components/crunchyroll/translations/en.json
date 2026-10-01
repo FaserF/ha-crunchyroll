@@ -16,6 +16,10 @@
           "profile_id": "Profile"
         }
       },
+      "device_limits": {
+        "title": "Account & Device Usage Information",
+        "description": "Detected Plan: **{tier}**\n\n- **Device Slot**: Home Assistant registers as 1 device in your Crunchyroll device activation pool (max. **{max_devices}** devices).\n- **Concurrent Streams**: Your plan allows up to **{max_streams}** simultaneous video streams. Note: Home Assistant only fetches metadata and will **never** consume a video streaming slot.\n\n*Note: Crunchyroll's API does not expose active live streams or third-party devices in real-time.*"
+      },
       "reauth_confirm": {
         "title": "Re-authenticate with Crunchyroll",
         "description": "Your Crunchyroll credentials are no longer valid. Please enter your credentials to reconnect.",
