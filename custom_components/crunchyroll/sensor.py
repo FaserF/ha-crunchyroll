@@ -60,6 +60,7 @@ async def async_setup_entry(
             CrunchyrollNewEpisodesForWatchedSensor(coordinator, entry),
             CrunchyrollNewEpisodesSensor(coordinator, entry),
             CrunchyrollCustomListsSensor(coordinator, entry),
+            CrunchyrollDeviceStreamsSensor(coordinator, entry),
         ]
     )
 
@@ -603,4 +604,49 @@ class CrunchyrollNewEpisodesSensor(_BaseCrunchyrollSensor):
             "latest_image_url": latest.get("image_url", ""),
             "latest_url": latest.get("url", ""),
             ATTR_NEW_EPISODES: items,
+        }
+
+
+class CrunchyrollDeviceStreamsSensor(_BaseCrunchyrollSensor):
+    """Sensor for Crunchyroll registered device and stream limits."""
+
+    _attr_entity_registry_enabled_default = False
+
+    def __init__(
+        self,
+        coordinator: CrunchyrollDataUpdateCoordinator,
+        entry: ConfigEntry,
+    ) -> None:
+        super().__init__(
+            coordinator,
+            entry,
+            unique_suffix="devices_streams",
+            translation_key="devices_streams",
+            icon="mdi:devices",
+        )
+
+    @property
+    def native_value(self) -> int:
+        """Return the maximum allowed simultaneous streams for this account."""
+        if not self.coordinator.data or not self.coordinator.data.subscription:
+            return 1
+        return self.coordinator.data.subscription.max_simultaneous_streams
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return detailed device activation pool and stream usage attributes."""
+        sub = self.coordinator.data.subscription if self.coordinator.data else None
+        tier = sub.tier if sub else "free"
+        max_streams = sub.max_simultaneous_streams if sub else 1
+        max_devices = sub.max_registered_devices if sub else 20
+
+        # Note: Crunchyroll internal REST API does not provide a public active session / device count query endpoint
+        return {
+            "subscription_tier": tier,
+            "max_simultaneous_streams": max_streams,
+            "max_registered_devices": max_devices,
+            "active_streams_api_available": False,
+            "active_streams_note": "Crunchyroll does not expose active real-time stream counts via API",
+            "registered_devices_api_available": False,
+            "registered_devices_note": "Crunchyroll does not expose registered device count via API; activation pool limit is 20",
         }

@@ -138,3 +138,13 @@ async def test_sensor_setup_and_state(
         entry_cl = ent_reg.async_get("sensor.crunchyroll_animehero_custom_lists")
         assert entry_cl is not None
         assert entry_cl.disabled is True
+
+        entry_dev = ent_reg.async_get(
+            "sensor.crunchyroll_animehero_devices_and_streams"
+        )
+        if entry_dev is None:
+            entry_dev = ent_reg.async_get(
+                "sensor.crunchyroll_animehero_devices_streams"
+            )
+        assert entry_dev is not None
+        assert entry_dev.disabled is True

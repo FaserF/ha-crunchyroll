@@ -99,6 +99,9 @@ class CrunchyrollSubscription:
             tier_name = "mega_fan"
             for p in prods:
                 p_lower = p.lower()
+                if "ultimate" in p_lower:
+                    tier_name = "ultimate_fan"
+                    break
                 if "fanpack" in p_lower or "mega_fan" in p_lower:
                     tier_name = "mega_fan"
                     break
@@ -108,6 +111,26 @@ class CrunchyrollSubscription:
             tier_name = "free"
 
         return cls(is_premium=is_prem, tier=tier_name, products=prods)
+
+    @property
+    def max_simultaneous_streams(self) -> int:
+        """Return the maximum allowed simultaneous streams based on subscription tier."""
+        if not self.is_premium:
+            return 1
+        tier_lower = self.tier.lower()
+        if "ultimate" in tier_lower:
+            return 6
+        if "mega" in tier_lower:
+            return 4
+        if "fan" in tier_lower:
+            return 1
+        return 1
+
+    @property
+    def max_registered_devices(self) -> int:
+        """Return the maximum registered/activated devices supported before eviction (account limit)."""
+        # Crunchyroll enforces a device activation pool limit of 20 devices per account
+        return 20
 
 
 @dataclass

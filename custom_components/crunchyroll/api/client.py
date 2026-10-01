@@ -340,11 +340,44 @@ class CrunchyrollClient:
     ) -> tuple[list[CrunchyrollItem], int]:
         if not self.account_id:
             await self.get_profile()
-        data = await self.request(
-            "GET",
-            f"content/v2/{self.account_id}/watch-history",
-            params={"page_size": limit, "page": page, "locale": self.locale},
-        )
+        # Crunchyroll's watch-history v2 API validation:
+        # Some accounts/locales only accept page as string or reject page > 1, or expect page_size <= 100
+        params: dict[str, Any] = {
+            "page_size": min(limit, 100),
+            "locale": self.locale,
+        }
+        if page > 1:
+            params["page"] = page
+
+        try:
+            data = await self.request(
+                "GET",
+                f"content/v2/{self.account_id}/watch-history",
+                params=params,
+            )
+        except CrunchyrollError as err:
+            # If Crunchyroll returns format validation error for page, retry without page parameter
+            if "format_validation_error" in str(err) or "invalid_value" in str(err):
+                _LOGGER.debug(
+                    "Watch history rejected page parameter, falling back to base request: %s",
+                    err,
+                )
+                try:
+                    data = await self.request(
+                        "GET",
+                        f"content/v2/{self.account_id}/watch-history",
+                        params={"page_size": min(limit, 100), "locale": self.locale},
+                    )
+                except CrunchyrollError as fallback_err:
+                    _LOGGER.warning(
+                        "Failed to fetch watch history after fallback: %s",
+                        fallback_err,
+                    )
+                    return [], 0
+            else:
+                _LOGGER.warning("Failed to fetch watch history: %s", err)
+                return [], 0
+
         items = data.get("data", [])
         total = int(data.get("total", len(items)))
         return [CrunchyrollItem.from_panel_dict(it) for it in items], total
@@ -667,19 +700,19 @@ class CrunchyrollClient:
         profile = await self.get_profile()
         sub = await self.get_subscription()
         watchlist = await self.get_watchlist(100)
-        # Fetch full watch history (up to 10,000 items / 20 pages of 500) so older series are never dropped
+        # Fetch watch history (up to 1,000 items / 10 pages of 100)
         history: list[CrunchyrollItem] = []
         total_history_count = 0
-        for page_idx in range(1, 21):
+        for page_idx in range(1, 11):
             page_items, total_count = await self.get_watch_history_with_total(
-                500, page=page_idx
+                100, page=page_idx
             )
             if page_idx == 1:
                 total_history_count = total_count
             if not page_items:
                 break
             history.extend(page_items)
-            if len(page_items) < 500:
+            if len(page_items) < 100:
                 break
 
         if not total_history_count:

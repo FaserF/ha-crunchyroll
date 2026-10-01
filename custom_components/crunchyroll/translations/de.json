@@ -92,6 +92,9 @@
       },
       "new_episodes": {
         "name": "Neue Episoden"
+      },
+      "devices_streams": {
+        "name": "Geräte und Streams"
       }
     },
     "calendar": {
