@@ -110,6 +110,11 @@
       "clean_watchlist": {
         "name": "Clean Watched from Watchlist"
       }
+    },
+    "media_player": {
+      "media_player": {
+        "name": "Media Player"
+      }
     }
   }
 }

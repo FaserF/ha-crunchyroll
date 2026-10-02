@@ -64,6 +64,9 @@ Unlike fragile web scraping solutions or browser automation scripts, this integr
   - `crunchyroll.get_seasons`: Fetch all seasons for a series.
   - `crunchyroll.get_episodes`: Fetch all episodes in a season.
   - `crunchyroll.get_custom_list_items`: Fetch items in a specific custom Crunchylist.
+- **📺 Native Media Browser**:
+  - `media_player.crunchyroll_<user>_media_player` integrates into HA's Media Browser, letting you explore Crunchyroll categories, your watchlist, simulcasts, and continue-watching queue directly from the HA UI.
+  - Launching an episode opens the Crunchyroll web player URL — compatible with Cast, Android TV, and any device that can receive a `play_media` service call from HA.
 - **🔔 Real-Time Automation Events**:
   - `crunchyroll_watchlist_updated`: Dispatched automatically when anime is added or modified in the user's watchlist.
 - **🛡️ Privacy & Diagnostics**:
@@ -162,6 +165,7 @@ After setup, click **Configure** on the integration page to customize settings a
 | `sensor.crunchyroll_<user>_simulcasts` | Sensor | **Enabled** | Current Season Simulcasts Count | `latest_simulcast_title`, `latest_simulcast_id`, `latest_simulcast_image`, `latest_simulcast_url`, `simulcasts` |
 | `calendar.crunchyroll_<user>_releases` | Calendar | **Enabled** | Calendar Entity | Real-time release schedules, episode titles, durations, stream URLs, and start/end times |
 | `button.crunchyroll_<user>_clean_watched_from_watchlist` | Button | **Enabled** | Button Entity | Triggers instant cleanup of fully watched/completed anime from your watchlist |
+| `media_player.crunchyroll_<user>_media_player` | Media Player | **Enabled** | `idle` / `playing` | Browse Crunchyroll library via HA Media Browser (categories, watchlist, simulcasts, continue watching); launch episode URLs on Cast/ATV devices |
 | `sensor.crunchyroll_<user>_new_animes` | Sensor | *Disabled* | New Catalog Releases Count | `latest_release_title`, `latest_release_id`, `latest_release_image`, `latest_release_url`, `new_animes` |
 | `sensor.crunchyroll_<user>_popular_animes` | Sensor | *Disabled* | Trending Series Count | `top_popular_title`, `top_popular_id`, `top_popular_image`, `top_popular_url`, `popular_animes` |
 | `sensor.crunchyroll_<user>_movies` | Sensor | *Disabled* | Anime Movies Catalog Count | `latest_movie_title`, `latest_movie_id`, `latest_movie_image`, `latest_movie_url`, `movies` |

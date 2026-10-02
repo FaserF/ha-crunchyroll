@@ -33,6 +33,7 @@ PLATFORMS: Final[list[Platform]] = [
     Platform.SENSOR,
     Platform.CALENDAR,
     Platform.BUTTON,
+    Platform.MEDIA_PLAYER,
 ]
 
 

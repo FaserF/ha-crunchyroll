@@ -530,6 +530,24 @@ class CrunchyrollClient:
             _LOGGER.warning("Failed to fetch categories: %s", err)
             return []
 
+    async def get_category_items(
+        self, category_id: str, limit: int = 25
+    ) -> list[CrunchyrollItem]:
+        """Fetch anime belonging to a specific category."""
+        try:
+            data = await self.request(
+                "GET",
+                "content/v2/discover/browse",
+                params={"categories": category_id, "n": limit, "locale": self.locale},
+            )
+            items = data.get("data", [])
+            return [CrunchyrollItem.from_panel_dict(it) for it in items]
+        except CrunchyrollError as err:
+            _LOGGER.warning(
+                "Failed to fetch items for category %s: %s", category_id, err
+            )
+            return []
+
     async def get_similar(
         self, series_id: str, limit: int = 10
     ) -> list[CrunchyrollItem]:

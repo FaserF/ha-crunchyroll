@@ -110,6 +110,11 @@
       "clean_watchlist": {
         "name": "Geschaute Animes aus Watchlist entfernen"
       }
+    },
+    "media_player": {
+      "media_player": {
+        "name": "Media Player"
+      }
     }
   }
 }

@@ -198,8 +198,14 @@ def mock_crunchyroll_client(mock_crunchyroll_data: CrunchyrollData):
     client.get_seasons = AsyncMock(
         return_value=[{"id": "season-1", "title": "Season 1"}]
     )
+    client.get_series_seasons = AsyncMock(
+        return_value=[{"id": "season-1", "title": "Season 1"}]
+    )
     client.get_season_episodes = AsyncMock(
         return_value=[{"id": "ep-1", "title": "Episode 1"}]
+    )
+    client.get_category_items = AsyncMock(
+        return_value=mock_crunchyroll_data.popular_animes
     )
     client.update_playhead = AsyncMock(return_value=True)
     client.add_to_watchlist = AsyncMock(return_value=True)
