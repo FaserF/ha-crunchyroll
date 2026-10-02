@@ -111,13 +111,28 @@ class CrunchyrollReleasesCalendarEntity(
     @property
     def event(self) -> CalendarEvent | None:
         """Return the next upcoming or current event."""
-        if not self.coordinator.data or not self.coordinator.data.new_episodes:
+        if not self.coordinator.data:
+            return None
+
+        # Aggregate new episodes, new episodes for watched, and current season simulcasts
+        seen_ids: set[str] = set()
+        items: list[CrunchyrollItem] = []
+        for it in (
+            self.coordinator.data.new_episodes
+            + self.coordinator.data.new_episodes_for_watched
+            + self.coordinator.data.simulcasts
+        ):
+            if it.id and it.id not in seen_ids:
+                seen_ids.add(it.id)
+                items.append(it)
+
+        if not items:
             return None
 
         now = datetime.now(ZoneInfo("UTC"))
         upcoming_events: list[CalendarEvent] = []
 
-        for item in self.coordinator.data.new_episodes:
+        for item in items:
             event = self._item_to_calendar_event(item)
             if event and event.end >= now:
                 upcoming_events.append(event)
@@ -125,7 +140,7 @@ class CrunchyrollReleasesCalendarEntity(
         if not upcoming_events:
             all_events = [
                 ev
-                for item in self.coordinator.data.new_episodes
+                for item in items
                 if (ev := self._item_to_calendar_event(item)) is not None
             ]
             if all_events:
@@ -152,8 +167,19 @@ class CrunchyrollReleasesCalendarEntity(
         if end_date.tzinfo is None:
             end_date = end_date.replace(tzinfo=tz)
 
+        seen_ids: set[str] = set()
+        items: list[CrunchyrollItem] = []
+        for it in (
+            self.coordinator.data.new_episodes
+            + self.coordinator.data.new_episodes_for_watched
+            + self.coordinator.data.simulcasts
+        ):
+            if it.id and it.id not in seen_ids:
+                seen_ids.add(it.id)
+                items.append(it)
+
         events: list[CalendarEvent] = []
-        for item in self.coordinator.data.new_episodes:
+        for item in items:
             ev = self._item_to_calendar_event(item)
             if not ev:
                 continue

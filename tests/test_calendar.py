@@ -57,3 +57,8 @@ async def test_calendar_setup_and_events(
         assert len(events) >= 1
         assert "Frieren" in events[0].summary
         assert events[0].uid == "item-001"
+
+        # Verify next event property
+        next_ev = cal_entity.event
+        assert next_ev is not None
+        assert "Frieren" in next_ev.summary
