@@ -115,6 +115,11 @@
       "media_player": {
         "name": "Media Player"
       }
+    },
+    "select": {
+      "profile": {
+        "name": "Profile"
+      }
     }
   }
 }

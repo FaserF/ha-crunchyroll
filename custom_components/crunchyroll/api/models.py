@@ -365,3 +365,4 @@ class CrunchyrollData:
     new_episodes: list[CrunchyrollItem] = field(default_factory=list)
     new_episodes_for_watched: list[CrunchyrollItem] = field(default_factory=list)
     total_history_count: int = 0
+    profiles: list[CrunchyrollProfile] = field(default_factory=list)

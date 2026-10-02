@@ -7,7 +7,7 @@ import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.core import HomeAssistant, ServiceCall, SupportsResponse
 
-from .const import DOMAIN
+from .const import CONF_PROFILE_ID, DOMAIN
 from .coordinator import CrunchyrollDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -31,6 +31,7 @@ SERVICE_UPDATE_PLAYHEAD = "update_playhead"
 SERVICE_CREATE_CUSTOM_LIST = "create_custom_list"
 SERVICE_ADD_TO_CUSTOM_LIST = "add_to_custom_list"
 SERVICE_REMOVE_FROM_CUSTOM_LIST = "remove_from_custom_list"
+SERVICE_SWITCH_PROFILE = "switch_profile"
 
 SEARCH_SCHEMA = vol.Schema(
     {
@@ -93,6 +94,12 @@ CUSTOM_LIST_ITEM_SCHEMA = vol.Schema(
     {
         vol.Required("list_id"): cv.string,
         vol.Required("content_id"): cv.string,
+    }
+)
+
+SWITCH_PROFILE_SCHEMA = vol.Schema(
+    {
+        vol.Required("profile_id"): cv.string,
     }
 )
 
@@ -303,6 +310,22 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         await coordinator.async_request_refresh()
         return {"success": success, "list_id": list_id, "content_id": content_id}
 
+    async def handle_switch_profile(call: ServiceCall) -> dict[str, Any]:
+        """Handle switching the active profile."""
+        coordinator = _get_first_coordinator(hass)
+        profile_id = call.data["profile_id"]
+        success = await coordinator.client.switch_profile(profile_id)
+        if coordinator.config_entry:
+            hass.config_entries.async_update_entry(
+                coordinator.config_entry,
+                options={
+                    **coordinator.config_entry.options,
+                    CONF_PROFILE_ID: profile_id,
+                },
+            )
+        await coordinator.async_request_refresh()
+        return {"success": success, "profile_id": profile_id}
+
     if not hass.services.has_service(DOMAIN, SERVICE_SEARCH):
         hass.services.async_register(
             DOMAIN,
@@ -474,6 +497,15 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             supports_response=SupportsResponse.OPTIONAL,
         )
 
+    if not hass.services.has_service(DOMAIN, SERVICE_SWITCH_PROFILE):
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_SWITCH_PROFILE,
+            handle_switch_profile,
+            schema=SWITCH_PROFILE_SCHEMA,
+            supports_response=SupportsResponse.OPTIONAL,
+        )
+
 
 async def async_unload_services(hass: HomeAssistant) -> None:
     """Unregister Crunchyroll services."""
@@ -497,6 +529,7 @@ async def async_unload_services(hass: HomeAssistant) -> None:
         SERVICE_CREATE_CUSTOM_LIST,
         SERVICE_ADD_TO_CUSTOM_LIST,
         SERVICE_REMOVE_FROM_CUSTOM_LIST,
+        SERVICE_SWITCH_PROFILE,
     ):
         if hass.services.has_service(DOMAIN, service):
             hass.services.async_remove(DOMAIN, service)

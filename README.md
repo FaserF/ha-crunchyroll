@@ -67,6 +67,7 @@ Unlike fragile web scraping solutions or browser automation scripts, this integr
   - `crunchyroll.create_custom_list`: Create a new custom Crunchylist in your account.
   - `crunchyroll.add_to_custom_list`: Add an anime series or movie to a custom Crunchylist.
   - `crunchyroll.remove_from_custom_list`: Remove an anime from a custom Crunchylist.
+  - `crunchyroll.switch_profile`: Switch active subprofile dynamically via profile ID.
 - **📺 Native Media Browser**:
   - `media_player.crunchyroll_<user>_media_player` integrates into HA's Media Browser, letting you explore Crunchyroll categories, your watchlist, simulcasts, and continue-watching queue directly from the HA UI.
   - Launching an episode opens the Crunchyroll web player URL — compatible with Cast, Android TV, and any device that can receive a `play_media` service call from HA.
@@ -169,6 +170,7 @@ After setup, click **Configure** on the integration page to customize settings a
 | `calendar.crunchyroll_<user>_releases` | Calendar | **Enabled** | Calendar Entity | Real-time release schedules, episode titles, durations, stream URLs, and start/end times |
 | `button.crunchyroll_<user>_clean_watched_from_watchlist` | Button | **Enabled** | Button Entity | Triggers instant cleanup of fully watched/completed anime from your watchlist |
 | `media_player.crunchyroll_<user>_media_player` | Media Player | **Enabled** | `idle` / `playing` | Browse Crunchyroll library via HA Media Browser (categories, watchlist, simulcasts, continue watching); launch episode URLs on Cast/ATV devices |
+| `select.crunchyroll_<user>_profile` | Select | **Enabled** | Active Profile Name (e.g. `Fabian`) | `active_profile_id`, `profiles` (list of subprofiles with `profile_id`, `profile_name`, `username`, `avatar`, `is_primary`) |
 | `sensor.crunchyroll_<user>_new_animes` | Sensor | *Disabled* | New Catalog Releases Count | `latest_release_title`, `latest_release_id`, `latest_release_image`, `latest_release_url`, `new_animes` |
 | `sensor.crunchyroll_<user>_popular_animes` | Sensor | *Disabled* | Trending Series Count | `top_popular_title`, `top_popular_id`, `top_popular_image`, `top_popular_url`, `popular_animes` |
 | `sensor.crunchyroll_<user>_movies` | Sensor | *Disabled* | Anime Movies Catalog Count | `latest_movie_title`, `latest_movie_id`, `latest_movie_image`, `latest_movie_url`, `movies` |
@@ -373,6 +375,14 @@ action: crunchyroll.remove_from_custom_list
 data:
   list_id: "3d3e8b0a-4a25-4b45-9854-cf2487e4125b"
   content_id: "GY5P48XEY"
+```
+
+### `crunchyroll.switch_profile`
+Switch the active Crunchyroll profile using the target profile ID.
+```yaml
+action: crunchyroll.switch_profile
+data:
+  profile_id: "b667c227-0c61-4d75-8088-188b8205f906"
 ```
 
 ---

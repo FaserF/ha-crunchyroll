@@ -247,6 +247,49 @@ class CrunchyrollClient:
         single = await self.get_profile()
         return [single]
 
+    async def switch_profile(self, profile_id: str) -> bool:
+        """Switch active profile via OAuth2 token exchange with profile_id."""
+        if not self.refresh_token:
+            await self.login()
+        if not self.refresh_token:
+            raise AuthenticationError("No refresh token available to switch profile")
+
+        payload = {
+            "grant_type": "refresh_token",
+            "refresh_token": self.refresh_token,
+            "scope": "offline_access",
+            "profile_id": profile_id,
+            "device_id": self.device_id,
+            "device_name": self.device_name,
+            "device_type": self.device_type,
+        }
+        headers = {
+            "Authorization": f"Basic {PUBLIC_TOKEN}",
+            "Content-Type": "application/x-www-form-urlencoded",
+        }
+        try:
+            resp = await self._client.post(
+                f"{BASE_URL}/auth/v1/token",
+                data=payload,
+                headers=headers,
+            )
+        except httpx.TransportError as err:
+            raise ConnectionError(f"Failed to switch profile: {err}") from err
+
+        if resp.status_code == 200:
+            data = resp.json()
+            self.access_token = data.get("access_token")
+            self.refresh_token = data.get("refresh_token")
+            expires = data.get("expires_in", 3600)
+            self.token_expiry = datetime.now(UTC).timestamp() + expires - 60
+            self.profile_id = profile_id
+            await self._notify_token_refresh()
+            return True
+
+        raise CrunchyrollError(
+            f"Failed to switch profile to {profile_id} ({resp.status_code}): {resp.text}"
+        )
+
     async def get_profile(self) -> CrunchyrollProfile:
         me_data: dict[str, Any] = {}
         try:
@@ -798,6 +841,7 @@ class CrunchyrollClient:
         new_episodes = await self.get_new_episodes(50)
         custom_lists = await self.get_custom_lists()
         categories = await self.get_categories()
+        profiles = await self.get_profiles()
 
         # Count total watched episodes per series across full history
         series_watched_count: dict[str, int] = {}
@@ -992,4 +1036,5 @@ class CrunchyrollClient:
             new_episodes=new_episodes,
             new_episodes_for_watched=new_episodes_for_watched,
             total_history_count=total_history_count,
+            profiles=profiles,
         )

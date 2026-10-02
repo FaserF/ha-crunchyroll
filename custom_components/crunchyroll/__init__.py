@@ -34,6 +34,7 @@ PLATFORMS: Final[list[Platform]] = [
     Platform.CALENDAR,
     Platform.BUTTON,
     Platform.MEDIA_PLAYER,
+    Platform.SELECT,
 ]
 
 

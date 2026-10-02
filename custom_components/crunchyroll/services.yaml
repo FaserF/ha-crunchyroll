@@ -236,3 +236,15 @@ remove_from_custom_list:
       example: "GYZJ43JMR"
       selector:
         text:
+
+switch_profile:
+  name: Switch Profile
+  description: Switch active Crunchyroll profile by profile_id.
+  fields:
+    profile_id:
+      name: Profile ID
+      description: The profile ID to switch to.
+      required: true
+      example: "b667c227-0c61-4d75-8088-188b8205f906"
+      selector:
+        text:

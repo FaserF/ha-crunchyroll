@@ -155,6 +155,7 @@ def mock_crunchyroll_data(
         categories=[mock_category],
         new_episodes=[mock_item],
         new_episodes_for_watched=[mock_item],
+        profiles=[mock_profile],
     )
 
 
@@ -163,6 +164,8 @@ def mock_crunchyroll_client(mock_crunchyroll_data: CrunchyrollData):
     """Fixture for mocked CrunchyrollClient."""
     client = AsyncMock()
     client.login = AsyncMock(return_value=True)
+    client.profile_id = mock_crunchyroll_data.profile.profile_id
+    client.switch_profile = AsyncMock(return_value=True)
     client.close = AsyncMock(return_value=None)
     client.get_profile = AsyncMock(return_value=mock_crunchyroll_data.profile)
     client.get_profiles = AsyncMock(return_value=[mock_crunchyroll_data.profile])
