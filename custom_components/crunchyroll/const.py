@@ -21,6 +21,34 @@ MIN_SCAN_INTERVAL: Final = 3600  # 1 hour
 DEFAULT_LOCALE: Final = "en-US"
 DEFAULT_AUDIO_LOCALE: Final = "ja-JP"
 
+SUPPORTED_LOCALES: Final[dict[str, str]] = {
+    "en-US": "English (US)",
+    "de-DE": "Deutsch (German)",
+    "es-419": "Español (América Latina)",
+    "es-ES": "Español (España)",
+    "fr-FR": "Français (France)",
+    "it-IT": "Italiano (Italia)",
+    "pt-BR": "Português (Brasil)",
+    "pt-PT": "Português (Portugal)",
+    "ru-RU": "Русский (Russian)",
+    "ar-SA": "العربية (Arabic)",
+    "hi-IN": "हिन्दी (Hindi)",
+    "ja-JP": "日本語 (Japanese)",
+}
+
+SUPPORTED_AUDIO_LOCALES: Final[dict[str, str]] = {
+    "ja-JP": "Japanese (Original / OmU)",
+    "de-DE": "German (Dub)",
+    "en-US": "English (Dub)",
+    "es-419": "Spanish LatAm (Dub)",
+    "es-ES": "Spanish Spain (Dub)",
+    "fr-FR": "French (Dub)",
+    "it-IT": "Italian (Dub)",
+    "pt-BR": "Portuguese Brazil (Dub)",
+    "ru-RU": "Russian (Dub)",
+    "hi-IN": "Hindi (Dub)",
+}
+
 ATTR_ACCOUNT_ID: Final = "account_id"
 ATTR_PROFILE_ID: Final = "profile_id"
 ATTR_PROFILE_NAME: Final = "profile_name"

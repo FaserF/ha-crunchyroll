@@ -54,6 +54,7 @@ class CrunchyrollMediaPlayer(
     """Crunchyroll Media Player entity supporting browsing and media playback dispatch."""
 
     _attr_has_entity_name = True
+    _attr_entity_registry_enabled_default = False
     _attr_translation_key = "media_player"
     _attr_icon = "mdi:play-circle-outline"
     _attr_supported_features = (

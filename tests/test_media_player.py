@@ -8,6 +8,7 @@ from homeassistant.components.media_player import (
     MediaType,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.crunchyroll.const import (
@@ -48,9 +49,19 @@ async def test_media_player_setup_and_browse(
         await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
 
-        players = hass.states.async_entity_ids("media_player")
-        assert len(players) == 1
-        player_id = players[0]
+        ent_reg = er.async_get(hass)
+        entry_mp = ent_reg.async_get("media_player.crunchyroll_animehero_media_player")
+        assert entry_mp is not None
+        assert entry_mp.disabled is True
+
+        # Enable the media player entity and reload to test functionality
+        ent_reg.async_update_entity(
+            "media_player.crunchyroll_animehero_media_player", disabled_by=None
+        )
+        await hass.config_entries.async_reload(entry.entry_id)
+        await hass.async_block_till_done()
+
+        player_id = "media_player.crunchyroll_animehero_media_player"
         state = hass.states.get(player_id)
         assert state is not None
         assert state.state == MediaPlayerState.IDLE

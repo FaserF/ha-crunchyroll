@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 import pytest
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.crunchyroll.api.models import CrunchyrollProfile
@@ -51,7 +52,27 @@ async def test_profile_select_entity(
         await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
 
+    ent_reg = er.async_get(hass)
     entity_id = "select.crunchyroll_animehero_profile"
+    entry_sel = ent_reg.async_get(entity_id)
+    assert entry_sel is not None
+    assert entry_sel.disabled is True
+
+    # Enable entity and reload
+    ent_reg.async_update_entity(entity_id, disabled_by=None)
+    with (
+        patch(
+            "custom_components.crunchyroll.CrunchyrollClient",
+            return_value=mock_crunchyroll_client,
+        ),
+        patch(
+            "custom_components.crunchyroll.coordinator.CrunchyrollClient",
+            return_value=mock_crunchyroll_client,
+        ),
+    ):
+        await hass.config_entries.async_reload(entry.entry_id)
+        await hass.async_block_till_done()
+
     state = hass.states.get(entity_id)
     assert state is not None
     assert state.state == "AnimeHero"

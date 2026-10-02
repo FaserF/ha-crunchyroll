@@ -33,6 +33,8 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     MIN_SCAN_INTERVAL,
+    SUPPORTED_AUDIO_LOCALES,
+    SUPPORTED_LOCALES,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -407,18 +409,27 @@ class CrunchyrollOptionsFlowHandler(OptionsFlow):
                 default=current_interval,
             )
         ] = cv.positive_int
+        current_locale = options.get(CONF_LOCALE, DEFAULT_LOCALE)
+        current_audio = options.get(CONF_AUDIO_LOCALE, DEFAULT_AUDIO_LOCALE)
+        locales = dict(SUPPORTED_LOCALES)
+        if current_locale not in locales:
+            locales[current_locale] = current_locale
+        audio_locales = dict(SUPPORTED_AUDIO_LOCALES)
+        if current_audio not in audio_locales:
+            audio_locales[current_audio] = current_audio
+
         schema_fields[
             vol.Optional(
                 CONF_LOCALE,
-                default=options.get(CONF_LOCALE, DEFAULT_LOCALE),
+                default=current_locale,
             )
-        ] = str
+        ] = vol.In(locales)
         schema_fields[
             vol.Optional(
                 CONF_AUDIO_LOCALE,
-                default=options.get(CONF_AUDIO_LOCALE, DEFAULT_AUDIO_LOCALE),
+                default=current_audio,
             )
-        ] = str
+        ] = vol.In(audio_locales)
         schema_fields[
             vol.Optional(
                 CONF_AUTO_REMOVE_WATCHED_FROM_WATCHLIST,
