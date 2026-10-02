@@ -514,6 +514,55 @@ class CrunchyrollClient:
             )
             return []
 
+    async def create_custom_list(self, title: str) -> dict[str, str]:
+        """Create a new Crunchylist with the given title. Returns {list_id, title}."""
+        if not self.account_id:
+            await self.get_profile()
+        try:
+            data = await self.request(
+                "POST",
+                f"content/v2/{self.account_id}/custom-lists",
+                json_data={"title": title},
+            )
+            item = (data.get("data") or [{}])[0]
+            return {
+                "list_id": item.get("list_id", ""),
+                "title": item.get("title", title),
+            }
+        except CrunchyrollError as err:
+            raise CrunchyrollError(f"Failed to create custom list '{title}'") from err
+
+    async def add_to_custom_list(self, list_id: str, content_id: str) -> bool:
+        """Add a series/movie to a Crunchylist."""
+        if not self.account_id:
+            await self.get_profile()
+        try:
+            await self.request(
+                "POST",
+                f"content/v2/{self.account_id}/custom-lists/{list_id}",
+                json_data={"content_id": content_id},
+            )
+            return True
+        except CrunchyrollError as err:
+            _LOGGER.warning("Failed to add %s to list %s: %s", content_id, list_id, err)
+            return False
+
+    async def remove_from_custom_list(self, list_id: str, content_id: str) -> bool:
+        """Remove a series/movie from a Crunchylist."""
+        if not self.account_id:
+            await self.get_profile()
+        try:
+            await self.request(
+                "DELETE",
+                f"content/v2/{self.account_id}/custom-lists/{list_id}/{content_id}",
+            )
+            return True
+        except CrunchyrollError as err:
+            _LOGGER.warning(
+                "Failed to remove %s from list %s: %s", content_id, list_id, err
+            )
+            return False
+
     async def get_categories(self) -> list[Category]:
         """Fetch anime categories / genres."""
         try:

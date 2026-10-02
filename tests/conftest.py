@@ -211,6 +211,11 @@ def mock_crunchyroll_client(mock_crunchyroll_data: CrunchyrollData):
     client.add_to_watchlist = AsyncMock(return_value=True)
     client.remove_from_watchlist = AsyncMock(return_value=True)
     client.mark_as_watched = AsyncMock(return_value=True)
+    client.create_custom_list = AsyncMock(
+        return_value={"list_id": "new-list-123", "title": "Test List"}
+    )
+    client.add_to_custom_list = AsyncMock(return_value=True)
+    client.remove_from_custom_list = AsyncMock(return_value=True)
     client.search = AsyncMock(return_value=mock_crunchyroll_data.watchlist)
     client.fetch_all_data = AsyncMock(return_value=mock_crunchyroll_data)
     client.is_authorized = True

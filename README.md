@@ -64,6 +64,9 @@ Unlike fragile web scraping solutions or browser automation scripts, this integr
   - `crunchyroll.get_seasons`: Fetch all seasons for a series.
   - `crunchyroll.get_episodes`: Fetch all episodes in a season.
   - `crunchyroll.get_custom_list_items`: Fetch items in a specific custom Crunchylist.
+  - `crunchyroll.create_custom_list`: Create a new custom Crunchylist in your account.
+  - `crunchyroll.add_to_custom_list`: Add an anime series or movie to a custom Crunchylist.
+  - `crunchyroll.remove_from_custom_list`: Remove an anime from a custom Crunchylist.
 - **📺 Native Media Browser**:
   - `media_player.crunchyroll_<user>_media_player` integrates into HA's Media Browser, letting you explore Crunchyroll categories, your watchlist, simulcasts, and continue-watching queue directly from the HA UI.
   - Launching an episode opens the Crunchyroll web player URL — compatible with Cast, Android TV, and any device that can receive a `play_media` service call from HA.
@@ -344,6 +347,32 @@ action: crunchyroll.update_playhead
 data:
   content_id: "G9DU9EG8N"
   playhead_seconds: 420
+```
+
+### `crunchyroll.create_custom_list`
+Create a new custom Crunchylist in your account.
+```yaml
+action: crunchyroll.create_custom_list
+data:
+  title: "Top Shonen 2026"
+```
+
+### `crunchyroll.add_to_custom_list`
+Add an anime series or movie to an existing Crunchylist.
+```yaml
+action: crunchyroll.add_to_custom_list
+data:
+  list_id: "3d3e8b0a-4a25-4b45-9854-cf2487e4125b"
+  content_id: "GY5P48XEY"
+```
+
+### `crunchyroll.remove_from_custom_list`
+Remove an anime from a custom Crunchylist.
+```yaml
+action: crunchyroll.remove_from_custom_list
+data:
+  list_id: "3d3e8b0a-4a25-4b45-9854-cf2487e4125b"
+  content_id: "GY5P48XEY"
 ```
 
 ---

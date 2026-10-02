@@ -28,6 +28,9 @@ SERVICE_GET_SERIES_DETAILS = "get_series_details"
 SERVICE_GET_CUSTOM_LIST_ITEMS = "get_custom_list_items"
 SERVICE_MARK_AS_WATCHED = "mark_as_watched"
 SERVICE_UPDATE_PLAYHEAD = "update_playhead"
+SERVICE_CREATE_CUSTOM_LIST = "create_custom_list"
+SERVICE_ADD_TO_CUSTOM_LIST = "add_to_custom_list"
+SERVICE_REMOVE_FROM_CUSTOM_LIST = "remove_from_custom_list"
 
 SEARCH_SCHEMA = vol.Schema(
     {
@@ -77,6 +80,19 @@ SEASON_ACTION_SCHEMA = vol.Schema(
 CUSTOM_LIST_ACTION_SCHEMA = vol.Schema(
     {
         vol.Required("list_id"): cv.string,
+    }
+)
+
+CREATE_CUSTOM_LIST_SCHEMA = vol.Schema(
+    {
+        vol.Required("title"): cv.string,
+    }
+)
+
+CUSTOM_LIST_ITEM_SCHEMA = vol.Schema(
+    {
+        vol.Required("list_id"): cv.string,
+        vol.Required("content_id"): cv.string,
     }
 )
 
@@ -257,6 +273,36 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         await coordinator.async_request_refresh()
         return {"success": success, "content_id": content_id}
 
+    async def handle_create_custom_list(call: ServiceCall) -> dict[str, Any]:
+        """Handle creating a new Crunchylist."""
+        coordinator = _get_first_coordinator(hass)
+        title = call.data["title"]
+        result = await coordinator.client.create_custom_list(title=title)
+        await coordinator.async_request_refresh()
+        return result
+
+    async def handle_add_to_custom_list(call: ServiceCall) -> dict[str, Any]:
+        """Handle adding a series/movie to a Crunchylist."""
+        coordinator = _get_first_coordinator(hass)
+        list_id = call.data["list_id"]
+        content_id = call.data["content_id"]
+        success = await coordinator.client.add_to_custom_list(
+            list_id=list_id, content_id=content_id
+        )
+        await coordinator.async_request_refresh()
+        return {"success": success, "list_id": list_id, "content_id": content_id}
+
+    async def handle_remove_from_custom_list(call: ServiceCall) -> dict[str, Any]:
+        """Handle removing a series/movie from a Crunchylist."""
+        coordinator = _get_first_coordinator(hass)
+        list_id = call.data["list_id"]
+        content_id = call.data["content_id"]
+        success = await coordinator.client.remove_from_custom_list(
+            list_id=list_id, content_id=content_id
+        )
+        await coordinator.async_request_refresh()
+        return {"success": success, "list_id": list_id, "content_id": content_id}
+
     if not hass.services.has_service(DOMAIN, SERVICE_SEARCH):
         hass.services.async_register(
             DOMAIN,
@@ -401,6 +447,33 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             supports_response=SupportsResponse.OPTIONAL,
         )
 
+    if not hass.services.has_service(DOMAIN, SERVICE_CREATE_CUSTOM_LIST):
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_CREATE_CUSTOM_LIST,
+            handle_create_custom_list,
+            schema=CREATE_CUSTOM_LIST_SCHEMA,
+            supports_response=SupportsResponse.OPTIONAL,
+        )
+
+    if not hass.services.has_service(DOMAIN, SERVICE_ADD_TO_CUSTOM_LIST):
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_ADD_TO_CUSTOM_LIST,
+            handle_add_to_custom_list,
+            schema=CUSTOM_LIST_ITEM_SCHEMA,
+            supports_response=SupportsResponse.OPTIONAL,
+        )
+
+    if not hass.services.has_service(DOMAIN, SERVICE_REMOVE_FROM_CUSTOM_LIST):
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_REMOVE_FROM_CUSTOM_LIST,
+            handle_remove_from_custom_list,
+            schema=CUSTOM_LIST_ITEM_SCHEMA,
+            supports_response=SupportsResponse.OPTIONAL,
+        )
+
 
 async def async_unload_services(hass: HomeAssistant) -> None:
     """Unregister Crunchyroll services."""
@@ -421,6 +494,9 @@ async def async_unload_services(hass: HomeAssistant) -> None:
         SERVICE_GET_CUSTOM_LIST_ITEMS,
         SERVICE_UPDATE_PLAYHEAD,
         SERVICE_MARK_AS_WATCHED,
+        SERVICE_CREATE_CUSTOM_LIST,
+        SERVICE_ADD_TO_CUSTOM_LIST,
+        SERVICE_REMOVE_FROM_CUSTOM_LIST,
     ):
         if hass.services.has_service(DOMAIN, service):
             hass.services.async_remove(DOMAIN, service)

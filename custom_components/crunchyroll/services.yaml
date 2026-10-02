@@ -186,3 +186,53 @@ update_playhead:
           max: 86400
           mode: box
           unit_of_measurement: s
+
+create_custom_list:
+  name: Create Custom List
+  description: Create a new Crunchylist (custom anime list) in your Crunchyroll account.
+  fields:
+    title:
+      name: Title
+      description: Title for the new Crunchylist.
+      required: true
+      example: "My Favorites"
+      selector:
+        text:
+
+add_to_custom_list:
+  name: Add to Custom List
+  description: Add a series or movie to an existing Crunchylist.
+  fields:
+    list_id:
+      name: List ID
+      description: The Crunchylist ID (list_id from the custom_lists sensor attribute).
+      required: true
+      example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      selector:
+        text:
+    content_id:
+      name: Content ID
+      description: Crunchyroll series or movie ID to add.
+      required: true
+      example: "GYZJ43JMR"
+      selector:
+        text:
+
+remove_from_custom_list:
+  name: Remove from Custom List
+  description: Remove a series or movie from a Crunchylist.
+  fields:
+    list_id:
+      name: List ID
+      description: The Crunchylist ID (list_id from the custom_lists sensor attribute).
+      required: true
+      example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      selector:
+        text:
+    content_id:
+      name: Content ID
+      description: Crunchyroll series or movie ID to remove.
+      required: true
+      example: "GYZJ43JMR"
+      selector:
+        text:
