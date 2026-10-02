@@ -343,7 +343,7 @@ class CrunchyrollClient:
         # Crunchyroll's watch-history v2 API validation:
         # Some accounts/locales only accept page as string or reject page > 1, or expect page_size <= 100
         params: dict[str, Any] = {
-            "page_size": min(limit, 100),
+            "page_size": min(limit, 500),
             "locale": self.locale,
         }
         if page > 1:
@@ -356,17 +356,19 @@ class CrunchyrollClient:
                 params=params,
             )
         except CrunchyrollError as err:
-            # If Crunchyroll returns format validation error for page, retry without page parameter
-            if "format_validation_error" in str(err) or "invalid_value" in str(err):
+            # If Crunchyroll returns format validation error for page, and we are on page 1, retry without page param
+            if (
+                "format_validation_error" in str(err) or "invalid_value" in str(err)
+            ) and page == 1:
                 _LOGGER.debug(
-                    "Watch history rejected page parameter, falling back to base request: %s",
+                    "Watch history rejected page parameter on page 1, falling back: %s",
                     err,
                 )
                 try:
                     data = await self.request(
                         "GET",
                         f"content/v2/{self.account_id}/watch-history",
-                        params={"page_size": min(limit, 100), "locale": self.locale},
+                        params={"page_size": min(limit, 500), "locale": self.locale},
                     )
                 except CrunchyrollError as fallback_err:
                     _LOGGER.warning(
@@ -375,7 +377,7 @@ class CrunchyrollClient:
                     )
                     return [], 0
             else:
-                _LOGGER.warning("Failed to fetch watch history: %s", err)
+                _LOGGER.debug("End of watch history reached or page rejected: %s", err)
                 return [], 0
 
         items = data.get("data", [])
@@ -700,23 +702,22 @@ class CrunchyrollClient:
         profile = await self.get_profile()
         sub = await self.get_subscription()
         watchlist = await self.get_watchlist(100)
-        # Fetch watch history (up to 1,000 items / 10 pages of 100)
+        # Fetch watch history (up to 5,000 items / 10 pages of 500)
         history: list[CrunchyrollItem] = []
         total_history_count = 0
         for page_idx in range(1, 11):
             page_items, total_count = await self.get_watch_history_with_total(
-                100, page=page_idx
+                500, page=page_idx
             )
             if page_idx == 1:
                 total_history_count = total_count
             if not page_items:
                 break
             history.extend(page_items)
-            if len(page_items) < 100:
+            if len(page_items) < 500:
                 break
 
-        if not total_history_count:
-            total_history_count = len(history)
+        total_history_count = max(total_history_count, len(history))
 
         continue_watching = await self.get_continue_watching(100)
         recommendations = await self.get_recommendations(25)
@@ -739,9 +740,10 @@ class CrunchyrollClient:
             if s_id not in history_series_map:
                 history_series_map[s_id] = item
 
-        # In-progress series from native Continue Watching
+        # In-progress and completed series from Continue Watching
         in_progress_animes: list[AnimeProgress] = []
         cw_series_ids: set[str] = set()
+        cw_completed_animes: list[AnimeProgress] = []
 
         for item in continue_watching:
             s_id = item.series_id or item.id
@@ -751,27 +753,52 @@ class CrunchyrollClient:
             s_title = item.series_title or item.title
             watched_count = series_watched_count.get(s_id, 1)
 
-            in_progress_animes.append(
-                AnimeProgress(
-                    series_id=s_id,
-                    series_title=s_title,
-                    episode_id=item.id,
-                    episode_title=item.title,
-                    episode_number=item.episode_number,
-                    season_number=item.season_number,
-                    season_title=item.season_title,
-                    playhead_seconds=item.last_playhead_secs,
-                    duration_ms=item.duration_ms,
-                    is_completed=False,
-                    date_played=item.date_played,
-                    image_url=item.image_url,
-                    description=item.description,
-                    total_episodes_watched=watched_count,
-                )
+            is_finished = item.is_completed or (
+                item.duration_ms > 0
+                and item.last_playhead_secs >= (item.duration_ms / 1000) * 0.9
             )
 
-        # Completed series: series in watch history that are NOT in continue watching
-        completed_animes: list[AnimeProgress] = []
+            if is_finished:
+                cw_completed_animes.append(
+                    AnimeProgress(
+                        series_id=s_id,
+                        series_title=s_title,
+                        episode_id=item.id,
+                        episode_title=item.title or "Completed",
+                        episode_number=item.episode_number,
+                        season_number=item.season_number,
+                        season_title=item.season_title,
+                        playhead_seconds=item.last_playhead_secs,
+                        duration_ms=item.duration_ms,
+                        is_completed=True,
+                        date_played=item.date_played,
+                        image_url=item.image_url,
+                        description=item.description,
+                        total_episodes_watched=watched_count,
+                    )
+                )
+            else:
+                in_progress_animes.append(
+                    AnimeProgress(
+                        series_id=s_id,
+                        series_title=s_title,
+                        episode_id=item.id,
+                        episode_title=item.title,
+                        episode_number=item.episode_number,
+                        season_number=item.season_number,
+                        season_title=item.season_title,
+                        playhead_seconds=item.last_playhead_secs,
+                        duration_ms=item.duration_ms,
+                        is_completed=False,
+                        date_played=item.date_played,
+                        image_url=item.image_url,
+                        description=item.description,
+                        total_episodes_watched=watched_count,
+                    )
+                )
+
+        # Completed series: series in watch history not in continue watching + finished series in CW
+        completed_animes: list[AnimeProgress] = list(cw_completed_animes)
         completed_ids_to_resolve: list[str] = [
             s_id for s_id in history_series_map if s_id not in cw_series_ids
         ]
