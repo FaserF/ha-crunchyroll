@@ -587,7 +587,10 @@ class CrunchyrollClient:
                 },
             )
             items = data.get("data", [])
-            return [CrunchyrollItem.from_panel_dict(it) for it in items]
+            valid_items = [
+                CrunchyrollItem.from_panel_dict(it) for it in items if it.get("title")
+            ]
+            return valid_items[:limit]
         except CrunchyrollError as err:
             _LOGGER.warning("Failed to fetch simulcasts: %s", err)
             return []
