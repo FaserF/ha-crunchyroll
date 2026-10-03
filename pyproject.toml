@@ -1,6 +1,6 @@
 [project]
 name = "ha-crunchyroll"
-version = "1.0.0-dev0"
+version = "1.0.1-dev0"
 description = "Home Assistant integration for Crunchyroll."
 authors = [
     {name = "FaserF", email = "github@fabiseitz.de"}
