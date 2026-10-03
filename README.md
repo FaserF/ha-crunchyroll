@@ -50,17 +50,29 @@ Unlike fragile web scraping solutions or browser automation scripts, this integr
     - Displays trending and top-ranked series in your region.
   - **Custom Lists Sensor** (`sensor.crunchyroll_<user>_custom_lists`):
     - Tracks personal user-created Crunchylists with counts and list IDs.
+  - **Simulcasts / Movies / New Episodes Sensors**:
+    - Current-season simulcasts, anime movie catalog, all newly added episodes, and new episodes for shows you are watching.
+  - **Devices & Streams Sensor** (`sensor.crunchyroll_<user>_devices_streams`):
+    - Max simultaneous streams and registered-device limit of your subscription tier.
   - **Premium Status Binary Sensor** (`binary_sensor.crunchyroll_<user>_premium`):
     - Dedicated binary sensor for fast automation triggers (`on` when active premium subscription exists).
+- **📅 Release Calendar** (`calendar.crunchyroll_<user>_releases`): Upcoming/recent episode releases.
+- **🧹 Clean Watchlist Button** (`button.crunchyroll_<user>_clean_watched_from_watchlist`): Removes fully watched anime from your watchlist.
+- **👤 Profile Select** (`select.crunchyroll_<user>_profile`): Switch between subprofiles.
 - **⚡ Full Suite of Actionable Services**:
   - `crunchyroll.search`: Search anime series, movies, and episodes on demand.
   - `crunchyroll.add_to_watchlist`: Add any series or anime directly to your watchlist via ID.
   - `crunchyroll.remove_from_watchlist`: Remove items from your watchlist.
   - `crunchyroll.mark_as_watched`: Mark episodes or content items as completely watched.
+  - `crunchyroll.update_playhead`: Set resume position (seconds) for an episode.
   - `crunchyroll.get_watchlist`: Query watchlist items with custom limit.
   - `crunchyroll.get_history`: Query watch history with episode and playhead metadata.
   - `crunchyroll.get_popular`: Query currently trending/popular anime.
+  - `crunchyroll.get_simulcasts`: Query current seasonal simulcasts.
+  - `crunchyroll.get_movies`: Query anime movies.
   - `crunchyroll.get_similar`: Find similar anime series based on a given series ID.
+  - `crunchyroll.get_up_next`: Get the next episode to watch for a series.
+  - `crunchyroll.get_series_details`: Get full metadata for a series.
   - `crunchyroll.get_seasons`: Fetch all seasons for a series.
   - `crunchyroll.get_episodes`: Fetch all episodes in a season.
   - `crunchyroll.get_custom_list_items`: Fetch items in a specific custom Crunchylist.
@@ -73,6 +85,7 @@ Unlike fragile web scraping solutions or browser automation scripts, this integr
   - Launching an episode opens the Crunchyroll web player URL — compatible with Cast, Android TV, and any device that can receive a `play_media` service call from HA.
 - **🔔 Real-Time Automation Events**:
   - `crunchyroll_watchlist_updated`: Dispatched automatically when anime is added or modified in the user's watchlist.
+  - `crunchyroll_new_episode_available`: Dispatched when a new episode of a watched/watchlist series is released.
 - **🛡️ Privacy & Diagnostics**:
   - Built-in Home Assistant diagnostics with automated redaction of sensitive credentials, tokens, and email addresses.
 - **🎨 Official Brand Assets**:
@@ -138,8 +151,9 @@ Adding your Crunchyroll account is done entirely through the Home Assistant UI. 
    - **Email / Username**: Your Crunchyroll account login email or username.
    - **Password**: Your Crunchyroll account password.
    > **Note**: Your content locale and preferred audio language are automatically detected and imported directly from your Crunchyroll account profile settings.
-4. If your Crunchyroll account has **multiple profiles**, a second setup screen prompts you to choose which profile to track (defaults to your primary profile).
-5. Click **Submit**. The integration validates your credentials against the OAuth2 endpoint and configures all entities immediately.
+4. An info screen shows your detected subscription tier, max simultaneous streams, and device registration limit.
+5. If your Crunchyroll account has **multiple profiles**, a further setup screen prompts you to choose which profile to track (defaults to your primary profile).
+6. Click **Submit**. The integration validates your credentials against the OAuth2 endpoint and configures all entities immediately.
 
 ---
 
@@ -149,6 +163,7 @@ After setup, click **Configure** on the integration page to customize settings a
 
 | Option | Description | Default |
 |:---|:---|:---:|
+| **Email / Password** | Update login credentials (validated before saving). | Current credentials |
 | **Profile** *(Multi-profile only)* | Switch between Crunchyroll profiles on your account at any time. | Current Profile |
 | **Scan Interval (seconds)** | How frequently to poll profile, watch history, and recommendations (min. 3600s). | `86400` (24h) |
 | **Locale** | Content localization language code for titles and descriptions (`en-US`, `de-DE`, etc.). | `en-US` |
@@ -176,6 +191,8 @@ After setup, click **Configure** on the integration page to customize settings a
 | `sensor.crunchyroll_<user>_movies` | Sensor | *Disabled* | Anime Movies Catalog Count | `latest_movie_title`, `latest_movie_id`, `latest_movie_image`, `latest_movie_url`, `movies` |
 | `sensor.crunchyroll_<user>_new_episodes` | Sensor | *Disabled* | All Newly Added Episodes Count | `latest_episode_title`, `latest_series_title`, `latest_episode_number`, `latest_release_date`, `latest_image_url`, `new_episodes` |
 | `sensor.crunchyroll_<user>_custom_lists` | Sensor | *Disabled* | Custom Crunchylists Count | `custom_lists` (list of user lists with `list_id`, `title`, `total`, `is_public`, `modified_at`) |
+| `sensor.crunchyroll_<user>_devices_streams` | Sensor | *Disabled* | Max Simultaneous Streams | `subscription_tier`, `max_simultaneous_streams`, `max_registered_devices` |
+| `binary_sensor.crunchyroll_<user>_premium` | Binary Sensor | **Enabled** | `on` / `off` | Premium subscription active |
 
 ### Attribute Details
 
@@ -541,7 +558,7 @@ Crunchyroll distinguishes between **Continue Watching** (anime episodes you are 
 **No.** Both free and premium Crunchyroll accounts are supported. If you have a free account, `sensor.crunchyroll_<user>_account` will show state `free`, and the `binary_sensor.crunchyroll_<user>_premium` will indicate `off`. All watchlist and history sensors work regardless of tier.
 
 ### How often is data refreshed?
-By default, the integration polls Crunchyroll every **300 seconds (5 minutes)**. You can freely adjust this in the integration's **Options Flow** (e.g. 60 seconds or 600 seconds) to match your preferences.
+By default, the integration polls Crunchyroll every **86400 seconds (24 hours)**. You can adjust this in the integration's **Options Flow**; the minimum is **3600 seconds (1 hour)** to avoid API rate limits.
 
 ### What happens if my login credentials change?
 If your password changes or an authentication token becomes invalid, Home Assistant will prompt you with an automatic re-authentication flow in **Settings > Devices & Services** without losing your sensor entity history.

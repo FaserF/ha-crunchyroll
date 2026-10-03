@@ -248,3 +248,59 @@ switch_profile:
       example: "b667c227-0c61-4d75-8088-188b8205f906"
       selector:
         text:
+
+get_simulcasts:
+  name: Get Simulcasts
+  description: Retrieve current seasonal simulcast anime on Crunchyroll.
+  fields:
+    limit:
+      name: Limit
+      description: Number of simulcasts to fetch.
+      required: false
+      default: 20
+      example: 20
+      selector:
+        number:
+          min: 1
+          max: 100
+          mode: box
+
+get_movies:
+  name: Get Movies
+  description: Retrieve anime movies from the Crunchyroll catalog.
+  fields:
+    limit:
+      name: Limit
+      description: Number of movies to fetch.
+      required: false
+      default: 20
+      example: 20
+      selector:
+        number:
+          min: 1
+          max: 100
+          mode: box
+
+get_up_next:
+  name: Get Up Next
+  description: Retrieve the next episode to watch for a series.
+  fields:
+    series_id:
+      name: Series ID
+      description: Crunchyroll series ID.
+      required: true
+      example: "GR751KNZY"
+      selector:
+        text:
+
+get_series_details:
+  name: Get Series Details
+  description: Retrieve full metadata for a series (episode/season count, maturity, artwork).
+  fields:
+    series_id:
+      name: Series ID
+      description: Crunchyroll series ID.
+      required: true
+      example: "GR751KNZY"
+      selector:
+        text:

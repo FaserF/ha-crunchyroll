@@ -30,6 +30,7 @@ from .services import async_setup_services, async_unload_services
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: Final[list[Platform]] = [
+    Platform.BINARY_SENSOR,
     Platform.SENSOR,
     Platform.CALENDAR,
     Platform.BUTTON,
