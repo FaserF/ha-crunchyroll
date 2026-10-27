@@ -210,8 +210,8 @@ class CrunchyrollDataUpdateCoordinator(DataUpdateCoordinator[CrunchyrollData]):
             or ""
         )
 
-        if not suggestarr_url or not tmdb_api_key:
-            _LOGGER.debug("Suggestarr sync skipped: URL or TMDb API key not configured")
+        if not suggestarr_url:
+            _LOGGER.debug("Suggestarr sync skipped: URL not configured")
             return 0
 
         headers = {
@@ -282,69 +282,97 @@ class CrunchyrollDataUpdateCoordinator(DataUpdateCoordinator[CrunchyrollData]):
                 if clean_lower in self._synced_suggestarr_titles:
                     continue
 
-                # Search TMDb
+                # Search via Suggestarr internal TMDb proxy first, fallback to direct TMDb API if key provided
                 try:
                     search_q = urllib.parse.quote(title)
-                    tmdb_url = f"https://api.themoviedb.org/3/search/multi?api_key={tmdb_api_key}&query={search_q}&include_adult=false"
-                    async with session.get(
-                        tmdb_url,
-                        timeout=aiohttp.ClientTimeout(total=10),
-                    ) as tmdb_resp:
-                        if tmdb_resp.status != 200:
-                            continue
-                        tmdb_data = await tmdb_resp.json()
-                        results = tmdb_data.get("results", [])
+                    matched_id = None
+                    matched_title = title
+                    matched_year = None
+                    matched_type = "tv"
 
-                    matched = None
-                    for res in results:
-                        if res.get("media_type") in ("tv", "movie"):
-                            matched = res
-                            break
-
-                    if not matched:
-                        tv_url = f"https://api.themoviedb.org/3/search/tv?api_key={tmdb_api_key}&query={search_q}&include_adult=false"
+                    # 1. Try Suggestarr internal search proxy (/api/watched-history/me/search)
+                    try:
                         async with session.get(
-                            tv_url,
+                            f"{suggestarr_url}/api/watched-history/me/search?query={search_q}&media_type=both",
+                            headers=headers,
                             timeout=aiohttp.ClientTimeout(total=10),
-                        ) as tv_resp:
-                            if tv_resp.status == 200:
-                                tv_data = await tv_resp.json()
-                                tv_results = tv_data.get("results", [])
-                                if tv_results:
-                                    matched = tv_results[0]
-                                    matched["media_type"] = "tv"
+                            ssl=False,
+                        ) as sg_search_resp:
+                            if sg_search_resp.status == 200:
+                                sg_data = await sg_search_resp.json()
+                                sg_results = sg_data.get("results", [])
+                                if sg_results:
+                                    best_res = sg_results[0]
+                                    for r in sg_results:
+                                        if (
+                                            r.get("title") or ""
+                                        ).strip().lower() == clean_lower:
+                                            best_res = r
+                                            break
+                                    if best_res.get("tmdb_id"):
+                                        matched_id = str(best_res["tmdb_id"])
+                                        matched_title = best_res.get("title") or title
+                                        matched_type = (
+                                            best_res.get("media_type") or "tv"
+                                        )
+                                        y_val = best_res.get("year")
+                                        matched_year = (
+                                            int(y_val)
+                                            if y_val and str(y_val).isdigit()
+                                            else None
+                                        )
+                    except Exception as sg_err:
+                        _LOGGER.debug(
+                            "Suggestarr proxy search failed for '%s': %s", title, sg_err
+                        )
 
-                    if not matched:
+                    # 2. Fallback to direct TMDb search if Suggestarr proxy returned no result and API key is present
+                    if not matched_id and tmdb_api_key:
+                        tmdb_url = f"https://api.themoviedb.org/3/search/multi?api_key={tmdb_api_key}&query={search_q}&include_adult=false"
+                        async with session.get(
+                            tmdb_url,
+                            timeout=aiohttp.ClientTimeout(total=10),
+                        ) as tmdb_resp:
+                            if tmdb_resp.status == 200:
+                                tmdb_data = await tmdb_resp.json()
+                                results = tmdb_data.get("results", [])
+                                for res in results:
+                                    if res.get("media_type") in ("tv", "movie"):
+                                        matched_id = str(res.get("id"))
+                                        matched_title = (
+                                            res.get("name") or res.get("title") or title
+                                        )
+                                        matched_type = res.get("media_type", "tv")
+                                        date_str = (
+                                            res.get("first_air_date")
+                                            or res.get("release_date")
+                                            or ""
+                                        )
+                                        matched_year = (
+                                            int(date_str[:4])
+                                            if date_str
+                                            and len(date_str) >= 4
+                                            and date_str[:4].isdigit()
+                                            else None
+                                        )
+                                        break
+
+                    if not matched_id:
                         self._synced_suggestarr_titles.add(clean_lower)
                         continue
 
-                    tmdb_id = matched.get("id")
-                    if not tmdb_id:
-                        continue
-
-                    str_id = str(tmdb_id)
+                    str_id = str(matched_id)
                     if str_id in self._synced_suggestarr_titles:
                         self._synced_suggestarr_titles.add(clean_lower)
                         continue
 
-                    media_type = matched.get("media_type", "tv")
-                    matched_title = matched.get("name") or matched.get("title") or title
-                    date_str = (
-                        matched.get("first_air_date")
-                        or matched.get("release_date")
-                        or ""
-                    )
-                    year = (
-                        int(date_str[:4])
-                        if date_str and len(date_str) >= 4 and date_str[:4].isdigit()
-                        else None
-                    )
+                    tmdb_id = int(matched_id) if matched_id.isdigit() else matched_id
 
                     post_payload = {
                         "tmdb_id": tmdb_id,
-                        "media_type": media_type,
+                        "media_type": matched_type,
                         "title": matched_title,
-                        "year": year,
+                        "year": matched_year,
                     }
 
                     async with session.post(

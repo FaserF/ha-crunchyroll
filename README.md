@@ -80,6 +80,11 @@ Unlike fragile web scraping solutions or browser automation scripts, this integr
   - `crunchyroll.add_to_custom_list`: Add an anime series or movie to a custom Crunchylist.
   - `crunchyroll.remove_from_custom_list`: Remove an anime from a custom Crunchylist.
   - `crunchyroll.switch_profile`: Switch active subprofile dynamically via profile ID.
+  - `crunchyroll.sync_suggestarr`: Manually trigger synchronization of watched Crunchyroll anime to Suggestarr.
+- **🍿 Suggestarr Integration (Watched Anime Sync)**:
+  - Automatically transmits watched Crunchyroll anime series to your personal [Suggestarr](https://github.com/giuseppe99barchetta/suggestarr) instance.
+  - Resolves anime series to **TMDb IDs** via Suggestarr's built-in search proxy (or optional TMDb API key fallback) and cleans dub/sub markers (`[German Dub]`, `(OV/OmU)`, etc.) for high matching accuracy.
+  - Feeds Suggestarr's recommendation algorithms and prevents duplicate requests for anime you have already watched.
 - **📺 Native Media Browser**:
   - `media_player.crunchyroll_<user>_media_player` integrates into HA's Media Browser, letting you explore Crunchyroll categories, your watchlist, simulcasts, and continue-watching queue directly from the HA UI.
   - Launching an episode opens the Crunchyroll web player URL — compatible with Cast, Android TV, and any device that can receive a `play_media` service call from HA.
@@ -179,6 +184,9 @@ After setup, click **Configure** on the integration page to customize settings a
 | **Locale** | Content localization language code for titles and descriptions (`en-US`, `de-DE`, etc.). | `en-US` |
 | **Preferred Audio Language** | Preferred audio dub language filter for catalog and recommendations (`ja-JP`, `de-DE`, etc.). | `ja-JP` |
 | **Automatically remove watched anime from watchlist on sync** | Automatically deletes completed anime series from your personal watchlist whenever coordinator updates. | `off` / `false` |
+| **Automatically sync watched anime to Suggestarr** | Automatically transmits watched anime series to your personal Suggestarr instance. | `off` / `false` |
+| **Suggestarr URL** | Base URL of your Suggestarr instance (e.g. `http://suggestarr:5000` or `https://suggestarr.yourdomain.com`). | Empty |
+| **TMDb API Key (optional)** | Optional TMDb API key. If left empty, the integration automatically resolves TMDb IDs using Suggestarr's built-in search proxy. | Empty |
 
 ---
 
