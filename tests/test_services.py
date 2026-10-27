@@ -117,3 +117,44 @@ async def test_remove_from_custom_list_service(
         list_id="list-abc", content_id="GYZJ43JMR"
     )
     assert result == {"success": True, "list_id": "list-abc", "content_id": "GYZJ43JMR"}
+
+
+@pytest.mark.asyncio
+async def test_sync_suggestarr_service(
+    hass: HomeAssistant,
+    mock_crunchyroll_client,
+    mock_crunchyroll_data,
+):
+    """Service sync_suggestarr calls coordinator method and returns result."""
+    from unittest.mock import AsyncMock
+
+    entry = MockConfigEntry(domain=DOMAIN, data={"email": "a@b.com", "password": "pw"})
+    entry.add_to_hass(hass)
+
+    with (
+        patch(
+            "custom_components.crunchyroll.CrunchyrollClient",
+            return_value=mock_crunchyroll_client,
+        ),
+        patch(
+            "custom_components.crunchyroll.coordinator.CrunchyrollClient",
+            return_value=mock_crunchyroll_client,
+        ),
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    coordinator = hass.data[DOMAIN][entry.entry_id]
+    with patch.object(
+        coordinator, "async_sync_watched_to_suggestarr", new_callable=AsyncMock
+    ) as mock_sync:
+        mock_sync.return_value = 5
+        result = await hass.services.async_call(
+            DOMAIN,
+            "sync_suggestarr",
+            {},
+            blocking=True,
+            return_response=True,
+        )
+        mock_sync.assert_awaited_once_with(force_all=True)
+        assert result == {"status": "success", "synced_count": 5}

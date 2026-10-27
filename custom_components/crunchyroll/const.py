@@ -16,10 +16,17 @@ CONF_ACCESS_TOKEN: Final = "access_token"
 CONF_REFRESH_TOKEN: Final = "refresh_token"
 CONF_TOKEN_EXPIRY: Final = "token_expiry"
 
+CONF_SUGGESTARR_ENABLED: Final = "suggestarr_enabled"
+CONF_SUGGESTARR_URL: Final = "suggestarr_url"
+CONF_SUGGESTARR_TMDB_API_KEY: Final = "suggestarr_tmdb_api_key"
+
 DEFAULT_SCAN_INTERVAL: Final = 86400  # 24 hours
 MIN_SCAN_INTERVAL: Final = 3600  # 1 hour
 DEFAULT_LOCALE: Final = "en-US"
 DEFAULT_AUDIO_LOCALE: Final = "ja-JP"
+DEFAULT_SUGGESTARR_ENABLED: Final = False
+DEFAULT_SUGGESTARR_URL: Final = ""
+DEFAULT_TMDB_API_KEY: Final = ""
 
 SUPPORTED_LOCALES: Final[dict[str, str]] = {
     "en-US": "English (US)",

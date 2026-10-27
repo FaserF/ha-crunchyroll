@@ -115,7 +115,7 @@ class CrunchyrollClient:
                 data=payload,
                 headers=headers,
             )
-        except httpx.TransportError as err:
+        except (httpx.RequestError, httpx.HTTPError, TimeoutError) as err:
             raise ConnectionError(
                 f"Failed to connect to Crunchyroll auth: {err}"
             ) from err
@@ -177,7 +177,7 @@ class CrunchyrollClient:
                 data=payload,
                 headers=headers,
             )
-        except httpx.TransportError as err:
+        except (httpx.RequestError, httpx.HTTPError, TimeoutError) as err:
             raise ConnectionError(f"Failed to refresh token: {err}") from err
 
         if resp.status_code == 200:
@@ -213,7 +213,7 @@ class CrunchyrollClient:
                 json=json_data,
                 headers=headers,
             )
-        except httpx.TransportError as err:
+        except (httpx.RequestError, httpx.HTTPError, TimeoutError) as err:
             raise ConnectionError(f"Connection failed to {url}: {err}") from err
 
         if resp.status_code == 401 and not retried:
@@ -225,7 +225,12 @@ class CrunchyrollClient:
         if resp.status_code in (200, 201, 204):
             if resp.status_code == 204 or not resp.text:
                 return {}
-            return resp.json()
+            try:
+                return resp.json()
+            except Exception as err:
+                raise CrunchyrollError(
+                    f"Invalid JSON response from {url}: {err}"
+                ) from err
         raise CrunchyrollError(
             f"API error {resp.status_code} on {endpoint}: {resp.text}"
         )
@@ -273,7 +278,7 @@ class CrunchyrollClient:
                 data=payload,
                 headers=headers,
             )
-        except httpx.TransportError as err:
+        except (httpx.RequestError, httpx.HTTPError, TimeoutError) as err:
             raise ConnectionError(f"Failed to switch profile: {err}") from err
 
         if resp.status_code == 200:

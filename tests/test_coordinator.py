@@ -60,6 +60,23 @@ async def test_coordinator_update_connection_error(
         await coordinator._async_update_data()
 
 
+async def test_coordinator_update_unexpected_error(
+    hass: HomeAssistant, mock_crunchyroll_client
+) -> None:
+    """Test coordinator raises UpdateFailed on unexpected generic Exception (fixes #4)."""
+    mock_crunchyroll_client.fetch_all_data.side_effect = RuntimeError(
+        "Unexpected API crash"
+    )
+    entry = MockConfigEntry(domain=DOMAIN, data={CONF_EMAIL: "u", CONF_PASSWORD: "p"})
+    entry.add_to_hass(hass)
+    coordinator = CrunchyrollDataUpdateCoordinator(
+        hass, mock_crunchyroll_client, config_entry=entry, update_interval_seconds=300
+    )
+    with pytest.raises(UpdateFailed) as exc_info:
+        await coordinator._async_update_data()
+    assert "Unexpected error fetching crunchyroll data" in str(exc_info.value)
+
+
 async def test_coordinator_new_episode_event(
     hass: HomeAssistant, mock_crunchyroll_client, mock_crunchyroll_data
 ) -> None:

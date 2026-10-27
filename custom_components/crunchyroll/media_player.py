@@ -80,12 +80,12 @@ class CrunchyrollMediaPlayer(
             configuration_url="https://www.crunchyroll.com",
         )
         self._attr_state = MediaPlayerState.IDLE
-        self._attr_media_title = None
-        self._attr_media_series_title = None
-        self._attr_media_season = None
-        self._attr_media_episode = None
-        self._attr_media_image_url = None
-        self._attr_media_content_id = None
+        self._attr_media_title: str | None = None
+        self._attr_media_series_title: str | None = None
+        self._attr_media_season: str | None = None
+        self._attr_media_episode: str | None = None
+        self._attr_media_image_url: str | None = None
+        self._attr_media_content_id: str | None = None
         self._attr_media_content_type = MediaType.VIDEO
 
     @property

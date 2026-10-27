@@ -27,10 +27,16 @@ from .const import (
     CONF_PROFILE_ID,
     CONF_REFRESH_TOKEN,
     CONF_SCAN_INTERVAL,
+    CONF_SUGGESTARR_ENABLED,
+    CONF_SUGGESTARR_TMDB_API_KEY,
+    CONF_SUGGESTARR_URL,
     CONF_TOKEN_EXPIRY,
     DEFAULT_AUDIO_LOCALE,
     DEFAULT_LOCALE,
     DEFAULT_SCAN_INTERVAL,
+    DEFAULT_SUGGESTARR_ENABLED,
+    DEFAULT_SUGGESTARR_URL,
+    DEFAULT_TMDB_API_KEY,
     DOMAIN,
     MIN_SCAN_INTERVAL,
     SUPPORTED_AUDIO_LOCALES,
@@ -436,6 +442,26 @@ class CrunchyrollOptionsFlowHandler(OptionsFlow):
                 default=options.get(CONF_AUTO_REMOVE_WATCHED_FROM_WATCHLIST, False),
             )
         ] = bool
+        schema_fields[
+            vol.Optional(
+                CONF_SUGGESTARR_ENABLED,
+                default=options.get(
+                    CONF_SUGGESTARR_ENABLED, DEFAULT_SUGGESTARR_ENABLED
+                ),
+            )
+        ] = bool
+        schema_fields[
+            vol.Optional(
+                CONF_SUGGESTARR_URL,
+                default=options.get(CONF_SUGGESTARR_URL, DEFAULT_SUGGESTARR_URL),
+            )
+        ] = str
+        schema_fields[
+            vol.Optional(
+                CONF_SUGGESTARR_TMDB_API_KEY,
+                default=options.get(CONF_SUGGESTARR_TMDB_API_KEY, DEFAULT_TMDB_API_KEY),
+            )
+        ] = str
 
         return self.async_show_form(
             step_id="init", data_schema=vol.Schema(schema_fields), errors=errors

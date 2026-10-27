@@ -32,6 +32,7 @@ SERVICE_CREATE_CUSTOM_LIST = "create_custom_list"
 SERVICE_ADD_TO_CUSTOM_LIST = "add_to_custom_list"
 SERVICE_REMOVE_FROM_CUSTOM_LIST = "remove_from_custom_list"
 SERVICE_SWITCH_PROFILE = "switch_profile"
+SERVICE_SYNC_SUGGESTARR = "sync_suggestarr"
 
 SEARCH_SCHEMA = vol.Schema(
     {
@@ -326,6 +327,14 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         await coordinator.async_request_refresh()
         return {"success": success, "profile_id": profile_id}
 
+    async def handle_sync_suggestarr(call: ServiceCall) -> dict[str, Any]:
+        """Trigger sync of Crunchyroll watched history to Suggestarr."""
+        coordinator = _get_first_coordinator(hass)
+        synced_count = await coordinator.async_sync_watched_to_suggestarr(
+            force_all=True
+        )
+        return {"status": "success", "synced_count": synced_count}
+
     if not hass.services.has_service(DOMAIN, SERVICE_SEARCH):
         hass.services.async_register(
             DOMAIN,
@@ -506,6 +515,14 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             supports_response=SupportsResponse.OPTIONAL,
         )
 
+    if not hass.services.has_service(DOMAIN, SERVICE_SYNC_SUGGESTARR):
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_SYNC_SUGGESTARR,
+            handle_sync_suggestarr,
+            supports_response=SupportsResponse.OPTIONAL,
+        )
+
 
 async def async_unload_services(hass: HomeAssistant) -> None:
     """Unregister Crunchyroll services."""
@@ -530,6 +547,7 @@ async def async_unload_services(hass: HomeAssistant) -> None:
         SERVICE_ADD_TO_CUSTOM_LIST,
         SERVICE_REMOVE_FROM_CUSTOM_LIST,
         SERVICE_SWITCH_PROFILE,
+        SERVICE_SYNC_SUGGESTARR,
     ):
         if hass.services.has_service(DOMAIN, service):
             hass.services.async_remove(DOMAIN, service)

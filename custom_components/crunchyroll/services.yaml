@@ -304,3 +304,7 @@ get_series_details:
       example: "GR751KNZY"
       selector:
         text:
+
+sync_suggestarr:
+  name: Sync Watched Anime to Suggestarr
+  description: Manually trigger synchronization of watched Crunchyroll anime to Suggestarr.

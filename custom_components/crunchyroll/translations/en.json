@@ -51,7 +51,10 @@
           "scan_interval": "Update Interval (seconds, min. 3600)",
           "locale": "Content Locale",
           "preferred_audio_language": "Preferred Audio Language",
-          "auto_remove_watched_from_watchlist": "Automatically remove watched anime from watchlist on sync"
+          "auto_remove_watched_from_watchlist": "Automatically remove watched anime from watchlist on sync",
+          "suggestarr_enabled": "Automatically sync watched anime to Suggestarr",
+          "suggestarr_url": "Suggestarr URL",
+          "suggestarr_tmdb_api_key": "TMDb API Key for Suggestarr matching"
         }
       }
     },

@@ -51,7 +51,10 @@
           "scan_interval": "Aktualisierungsintervall (Sekunden, min. 3600)",
           "locale": "Inhaltssprache",
           "preferred_audio_language": "Bevorzugte Audiosprache",
-          "auto_remove_watched_from_watchlist": "Bereits vollständig geschaute Animes bei jeder Synchronisierung aus der Watchlist entfernen"
+          "auto_remove_watched_from_watchlist": "Bereits vollständig geschaute Animes bei jeder Synchronisierung aus der Watchlist entfernen",
+          "suggestarr_enabled": "Geschaute Animes automatisch nach Suggestarr synchronisieren",
+          "suggestarr_url": "Suggestarr URL",
+          "suggestarr_tmdb_api_key": "TMDb API-Schlüssel für Suggestarr-Abgleich"
         }
       }
     },
