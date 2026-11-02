@@ -1,9 +1,9 @@
-# Crunchyroll (for Home Assistant)
+﻿# Crunchyroll (for Home Assistant)
 
 [![GitHub Release](https://img.shields.io/github/release/FaserF/ha-crunchyroll.svg?style=flat-square)](https://github.com/FaserF/ha-crunchyroll/releases)
 [![Downloads (Current release)](https://img.shields.io/github/downloads/FaserF/ha-crunchyroll/latest/crunchyroll.zip?label=Downloads%20(Current%20release)&style=flat-square)](https://github.com/FaserF/ha-crunchyroll/releases)
 [![License](https://img.shields.io/github/license/FaserF/ha-crunchyroll.svg?style=flat-square)](LICENSE)
-[![hacs](https://img.shields.io/badge/HACS-custom-orange.svg?style=flat-square)](https://hacs.xyz)
+[![Home Assistant Marketplace](https://img.shields.io/badge/Home_Assistant-Marketplace-41BDF5.svg?style=flat-square&logo=homeassistant&logoColor=white)](https://www.home-assistant.io)
 [![Add to Home Assistant](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=crunchyroll)
 [![CI Orchestrator](https://github.com/FaserF/ha-crunchyroll/actions/workflows/ci-orchestrator.yml/badge.svg)](https://github.com/FaserF/ha-crunchyroll/actions/workflows/ci-orchestrator.yml)
 
@@ -121,8 +121,8 @@ Unlike fragile web scraping solutions or browser automation scripts, this integr
 
 | Device / Service | Integration Use Case | Link |
 | :--- | :--- | :--- |
-| **Home Assistant Green & Offizielle Smart-Home-Hardware** | Empfohlene Hardware-Basis für lokale Home Assistant Integrationen | [Offizielle Geräte-Seite →](https://fabiseitz.de/go/ha-hardware) |
-| **Home Assistant Connect ZBT-1 (Zigbee / Thread)** | Lokales Zigbee2MQTT, ZHA & Matter-over-Thread Funknetz | [Offizielle Geräte-Seite →](https://fabiseitz.de/go/ha-zigbee) |
+| **Home Assistant Green & Official Hardware** | Recommended hardware foundation for local Home Assistant integrations | [Official Device Page →](https://fabiseitz.de/go/ha-hardware) |
+| **Home Assistant Connect ZBT-1 (Zigbee / Thread)** | Local Zigbee2MQTT, ZHA & Matter-over-Thread wireless mesh | [Official Device Page →](https://fabiseitz.de/go/ha-zigbee) |
 
 
 ---
@@ -131,9 +131,9 @@ Unlike fragile web scraping solutions or browser automation scripts, this integr
 
 ### Option 1: HACS (Recommended)
 
-This integration is fully compatible with [HACS](https://hacs.xyz/).
+This integration is available via the official Home Assistant **Marketplace** (HA 2026.11+) or as a custom repository.
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?repository=FaserF/ha-crunchyroll&category=integration)
+[![Open your Home Assistant instance and open the repository in the Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?repository=FaserF/ha-crunchyroll&category=integration)
 
 1. Open **HACS** in your Home Assistant instance.
 2. Click the top-right menu (three dots) and select **Custom repositories**.
