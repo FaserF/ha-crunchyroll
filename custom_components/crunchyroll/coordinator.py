@@ -16,13 +16,7 @@ from .api.exceptions import AuthenticationError, ConnectionError, CrunchyrollErr
 from .api.models import CrunchyrollData
 from .const import (
     CONF_AUTO_REMOVE_WATCHED_FROM_WATCHLIST,
-    CONF_SUGGESTARR_ENABLED,
-    CONF_SUGGESTARR_TMDB_API_KEY,
-    CONF_SUGGESTARR_URL,
     DEFAULT_SCAN_INTERVAL,
-    DEFAULT_SUGGESTARR_ENABLED,
-    DEFAULT_SUGGESTARR_URL,
-    DEFAULT_TMDB_API_KEY,
     DOMAIN,
     EVENT_CRUNCHYROLL_NEW_EPISODE_AVAILABLE,
     EVENT_CRUNCHYROLL_WATCHLIST_UPDATED,
@@ -51,7 +45,6 @@ class CrunchyrollDataUpdateCoordinator(DataUpdateCoordinator[CrunchyrollData]):
         self.client = client
         self._previous_watchlist_ids: set[str] | None = None
         self._previous_episode_ids: set[str] | None = None
-        self._synced_suggestarr_titles: set[str] = set()
 
     async def _async_update_data(self) -> CrunchyrollData:
         """Fetch all data from Crunchyroll API."""
@@ -127,11 +120,7 @@ class CrunchyrollDataUpdateCoordinator(DataUpdateCoordinator[CrunchyrollData]):
         ):
             await self._async_clean_completed_from_watchlist_items(data)
 
-        # Sync watched items to Suggestarr if enabled
-        try:
-            await self.async_sync_watched_to_suggestarr()
-        except Exception as err:
-            _LOGGER.warning("Error auto-syncing watched anime to Suggestarr: %s", err)
+
 
         return data
 
@@ -183,227 +172,3 @@ class CrunchyrollDataUpdateCoordinator(DataUpdateCoordinator[CrunchyrollData]):
             flags=re.IGNORECASE,
         ).strip()
         return cleaned or title
-
-    async def async_sync_watched_to_suggestarr(self, force_all: bool = False) -> int:
-        """Sync watched Crunchyroll anime series to Suggestarr."""
-        if not self.config_entry:
-            return 0
-
-        enabled = self.config_entry.options.get(
-            CONF_SUGGESTARR_ENABLED, DEFAULT_SUGGESTARR_ENABLED
-        )
-        if not enabled:
-            _LOGGER.debug("Suggestarr sync is disabled in options")
-            return 0
-
-        if not self.data:
-            return 0
-
-        suggestarr_url = (
-            self.config_entry.options.get(CONF_SUGGESTARR_URL, DEFAULT_SUGGESTARR_URL)
-            or ""
-        ).rstrip("/")
-        tmdb_api_key = (
-            self.config_entry.options.get(
-                CONF_SUGGESTARR_TMDB_API_KEY, DEFAULT_TMDB_API_KEY
-            )
-            or ""
-        )
-
-        if not suggestarr_url:
-            _LOGGER.debug("Suggestarr sync skipped: URL not configured")
-            return 0
-
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "User-Agent": "HomeAssistant-Crunchyroll/1.0",
-        }
-
-        # Lazy initialize or refresh synced titles from Suggestarr
-        async with aiohttp.ClientSession() as session:
-            if not self._synced_suggestarr_titles or force_all:
-                try:
-                    async with session.get(
-                        f"{suggestarr_url}/api/watched-history/me",
-                        headers=headers,
-                        timeout=aiohttp.ClientTimeout(total=15),
-                        ssl=False,
-                    ) as resp:
-                        if resp.status == 200:
-                            res_json = await resp.json()
-                            items = res_json.get("items", [])
-                            for it in items:
-                                if it.get("title"):
-                                    self._synced_suggestarr_titles.add(
-                                        it["title"].strip().lower()
-                                    )
-                                if it.get("tmdb_id"):
-                                    self._synced_suggestarr_titles.add(
-                                        str(it["tmdb_id"])
-                                    )
-                except Exception as err:
-                    _LOGGER.warning(
-                        "Could not fetch existing watched items from Suggestarr: %s",
-                        err,
-                    )
-
-            # Collect all unique candidate series from watch history and progress
-            candidate_titles: list[str] = []
-            seen_clean: set[str] = set()
-
-            for prog in self.data.completed_animes:
-                t = prog.series_title or prog.episode_title
-                if t:
-                    c = self._clean_series_title(t)
-                    if c.lower() not in seen_clean:
-                        seen_clean.add(c.lower())
-                        candidate_titles.append(c)
-
-            for prog in self.data.in_progress_animes:
-                t = prog.series_title or prog.episode_title
-                if t:
-                    c = self._clean_series_title(t)
-                    if c.lower() not in seen_clean:
-                        seen_clean.add(c.lower())
-                        candidate_titles.append(c)
-
-            for it in self.data.history:
-                t = it.series_title or it.title
-                if t:
-                    c = self._clean_series_title(t)
-                    if c.lower() not in seen_clean:
-                        seen_clean.add(c.lower())
-                        candidate_titles.append(c)
-
-            synced_count = 0
-            for title in candidate_titles:
-                clean_lower = title.lower()
-                if clean_lower in self._synced_suggestarr_titles:
-                    continue
-
-                # Search via Suggestarr internal TMDb proxy first, fallback to direct TMDb API if key provided
-                try:
-                    search_q = urllib.parse.quote(title)
-                    matched_id = None
-                    matched_title = title
-                    matched_year = None
-                    matched_type = "tv"
-
-                    # 1. Try Suggestarr internal search proxy (/api/watched-history/me/search)
-                    try:
-                        async with session.get(
-                            f"{suggestarr_url}/api/watched-history/me/search?query={search_q}&media_type=both",
-                            headers=headers,
-                            timeout=aiohttp.ClientTimeout(total=10),
-                            ssl=False,
-                        ) as sg_search_resp:
-                            if sg_search_resp.status == 200:
-                                sg_data = await sg_search_resp.json()
-                                sg_results = sg_data.get("results", [])
-                                if sg_results:
-                                    best_res = sg_results[0]
-                                    for r in sg_results:
-                                        if (
-                                            r.get("title") or ""
-                                        ).strip().lower() == clean_lower:
-                                            best_res = r
-                                            break
-                                    if best_res.get("tmdb_id"):
-                                        matched_id = str(best_res["tmdb_id"])
-                                        matched_title = best_res.get("title") or title
-                                        matched_type = (
-                                            best_res.get("media_type") or "tv"
-                                        )
-                                        y_val = best_res.get("year")
-                                        matched_year = (
-                                            int(y_val)
-                                            if y_val and str(y_val).isdigit()
-                                            else None
-                                        )
-                    except Exception as sg_err:
-                        _LOGGER.debug(
-                            "Suggestarr proxy search failed for '%s': %s", title, sg_err
-                        )
-
-                    # 2. Fallback to direct TMDb search if Suggestarr proxy returned no result and API key is present
-                    if not matched_id and tmdb_api_key:
-                        tmdb_url = f"https://api.themoviedb.org/3/search/multi?api_key={tmdb_api_key}&query={search_q}&include_adult=false"
-                        async with session.get(
-                            tmdb_url,
-                            timeout=aiohttp.ClientTimeout(total=10),
-                        ) as tmdb_resp:
-                            if tmdb_resp.status == 200:
-                                tmdb_data = await tmdb_resp.json()
-                                results = tmdb_data.get("results", [])
-                                for res in results:
-                                    if res.get("media_type") in ("tv", "movie"):
-                                        matched_id = str(res.get("id"))
-                                        matched_title = (
-                                            res.get("name") or res.get("title") or title
-                                        )
-                                        matched_type = res.get("media_type", "tv")
-                                        date_str = (
-                                            res.get("first_air_date")
-                                            or res.get("release_date")
-                                            or ""
-                                        )
-                                        matched_year = (
-                                            int(date_str[:4])
-                                            if date_str
-                                            and len(date_str) >= 4
-                                            and date_str[:4].isdigit()
-                                            else None
-                                        )
-                                        break
-
-                    if not matched_id:
-                        self._synced_suggestarr_titles.add(clean_lower)
-                        continue
-
-                    str_id = str(matched_id)
-                    if str_id in self._synced_suggestarr_titles:
-                        self._synced_suggestarr_titles.add(clean_lower)
-                        continue
-
-                    tmdb_id = int(matched_id) if matched_id.isdigit() else matched_id
-
-                    post_payload = {
-                        "tmdb_id": tmdb_id,
-                        "media_type": matched_type,
-                        "title": matched_title,
-                        "year": matched_year,
-                    }
-
-                    async with session.post(
-                        f"{suggestarr_url}/api/watched-history/me",
-                        json=post_payload,
-                        headers=headers,
-                        timeout=aiohttp.ClientTimeout(total=15),
-                        ssl=False,
-                    ) as post_resp:
-                        if post_resp.status in (200, 201):
-                            synced_count += 1
-                            self._synced_suggestarr_titles.add(clean_lower)
-                            self._synced_suggestarr_titles.add(str_id)
-                            _LOGGER.info(
-                                "Synced '%s' (TMDb: %s) to Suggestarr",
-                                matched_title,
-                                tmdb_id,
-                            )
-                        else:
-                            resp_err = await post_resp.text()
-                            _LOGGER.warning(
-                                "Suggestarr returned %s for '%s': %s",
-                                post_resp.status,
-                                matched_title,
-                                resp_err,
-                            )
-                except Exception as sync_err:
-                    _LOGGER.warning(
-                        "Error syncing '%s' to Suggestarr: %s",
-                        title,
-                        sync_err,
-                    )
-
-            return synced_count
