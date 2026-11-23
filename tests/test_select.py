@@ -33,7 +33,7 @@ async def test_profile_select_entity(
         domain=DOMAIN,
         data={
             CONF_EMAIL: "test@example.com",
-            CONF_PASSWORD: "secret_password",
+            CONF_[REDACTED_SECRET_81701],
         },
         entry_id="test_entry_id",
     )
@@ -99,7 +99,7 @@ async def test_switch_profile_service(
         domain=DOMAIN,
         data={
             CONF_EMAIL: "test@example.com",
-            CONF_PASSWORD: "secret_password",
+            CONF_[REDACTED_SECRET_81701],
         },
         entry_id="test_entry_id",
     )
