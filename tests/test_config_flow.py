@@ -38,7 +38,7 @@ async def test_flow_user_success(hass: HomeAssistant, mock_crunchyroll_client) -
             result["flow_id"],
             {
                 CONF_EMAIL: "test@example.com",
-                CONF_[REDACTED_SECRET_81701],
+                CONF_PASSWORD: "secret_password",
             },
         )
         assert result2["type"] == data_entry_flow.FlowResultType.FORM
@@ -180,7 +180,7 @@ async def test_flow_user_multiple_profiles(
             result["flow_id"],
             {
                 CONF_EMAIL: "multi@example.com",
-                CONF_[REDACTED_SECRET_81701],
+                CONF_PASSWORD: "secret_password",
             },
         )
         assert result2["type"] == data_entry_flow.FlowResultType.FORM
@@ -321,7 +321,7 @@ async def test_reauth_flow_invalid_auth(
             result["flow_id"],
             {
                 CONF_EMAIL: "old@example.com",
-                CONF_[REDACTED_SECRET_13093],
+                CONF_PASSWORD: "wrong_password",
             },
         )
         assert result2["type"] == data_entry_flow.FlowResultType.FORM
@@ -355,7 +355,7 @@ async def test_options_flow_update_credentials(
             result["flow_id"],
             user_input={
                 CONF_EMAIL: "updated@example.com",
-                CONF_[REDACTED_SECRET_15093],
+                CONF_PASSWORD: "updated_password",
                 CONF_SCAN_INTERVAL: 7200,
                 CONF_LOCALE: "de-DE",
                 CONF_AUDIO_LOCALE: "ja-JP",
