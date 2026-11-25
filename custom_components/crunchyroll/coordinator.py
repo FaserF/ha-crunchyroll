@@ -2,10 +2,8 @@ from __future__ import annotations
 
 import logging
 import re
-import urllib.parse
 from datetime import timedelta
 
-import aiohttp
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
@@ -119,8 +117,6 @@ class CrunchyrollDataUpdateCoordinator(DataUpdateCoordinator[CrunchyrollData]):
             CONF_AUTO_REMOVE_WATCHED_FROM_WATCHLIST, False
         ):
             await self._async_clean_completed_from_watchlist_items(data)
-
-
 
         return data
 

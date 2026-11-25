@@ -83,7 +83,6 @@ async def test_add_to_custom_list_service(
     assert result == {"success": True, "list_id": "list-abc", "content_id": "GYZJ43JMR"}
 
 
-@pytest.mark.asyncio
 async def test_remove_from_custom_list_service(
     hass: HomeAssistant,
     mock_crunchyroll_client,
@@ -117,6 +116,3 @@ async def test_remove_from_custom_list_service(
         list_id="list-abc", content_id="GYZJ43JMR"
     )
     assert result == {"success": True, "list_id": "list-abc", "content_id": "GYZJ43JMR"}
-
-
-@pytest.mark.asyncio

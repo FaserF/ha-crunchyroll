@@ -4,7 +4,11 @@ import logging
 from typing import Any
 
 import homeassistant.helpers.config_validation as cv
-import voluptuous as vol
+
+try:
+    import probatio as vol
+except ImportError:
+    import voluptuous as vol  # type: ignore[no-redef]
 from homeassistant.core import HomeAssistant, ServiceCall, SupportsResponse
 
 from .const import CONF_PROFILE_ID, DOMAIN
@@ -505,7 +509,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             schema=SWITCH_PROFILE_SCHEMA,
             supports_response=SupportsResponse.OPTIONAL,
         )
-
 
 
 async def async_unload_services(hass: HomeAssistant) -> None:
